@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة تحكم المدير - تذاكر الحفل</title>
-    <!-- لا نحتاج qrcode.js أو html2canvas هنا الآن -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -52,8 +53,14 @@
             margin-bottom: 20px;
         }
 
-        header h1 { margin: 0; font-size: 2em; font-weight: 600; }
-        header h1 i { margin-left: 10px; }
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+            font-weight: 600;
+        }
+        header h1 i {
+            margin-left: 10px;
+        }
 
         .content-grid {
             display: grid;
@@ -79,9 +86,16 @@
             border-bottom: 2px solid var(--medium-gray);
             font-weight: 600;
         }
-        .card h2 i { margin-left: 8px; }
+        .card h2 i {
+            margin-left: 8px;
+        }
 
-        label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--dark-gray); }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark-gray);
+        }
 
         input[type="text"],
         textarea {
@@ -101,7 +115,10 @@
             box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
             outline: none;
         }
-        textarea { min-height: 120px; resize: vertical; }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
 
         button {
             padding: 10px 20px;
@@ -127,57 +144,169 @@
 
         .button-secondary { background-color: #95a5a6; }
         .button-secondary:hover { background-color: #7f8c8d; }
-        .button-success { background-color: #2ecc71; } /* يمكن استخدامه لزر النسخ */
+        .button-success { background-color: #2ecc71; }
         .button-success:hover { background-color: #27ae60; }
-        
+        .button-danger { background-color: var(--accent-color); }
+        .button-danger:hover { background-color: #c0392b; }
+
+
         #generatedTicketsContainer {
             margin-top: 20px;
-            max-height: 400px;
+            max-height: 400px; /* Or adjust as needed */
             overflow-y: auto;
             border: 1px solid var(--medium-gray);
             border-radius: var(--border-radius);
             padding: 10px;
-            background-color: #f9f9f9;
         }
-        .ticket-link-entry {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .ticket-card {
+            background-color: var(--card-bg); /* استخدام متغير الخلفية */
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: center;
         }
-        .ticket-link-entry:last-child { border-bottom: none; }
-        .ticket-link-entry p { margin: 0; flex-grow: 1; }
-        .ticket-link-entry a { color: var(--primary-color); text-decoration: none; word-break: break-all; }
-        .ticket-link-entry a:hover { text-decoration: underline; }
-        .copy-link-btn {
-            margin-right: 0; /* إزالة الهامش الأيمن */
-            margin-left: 10px; /* إضافة هامش أيسر بدلاً منه */
-            padding: 6px 12px;
-            font-size: 0.85em;
+        .ticket-card .qr-code {
+            margin-bottom: 10px;
+            display: inline-block; 
+            border: 2px solid var(--primary-color);
+            padding: 5px;
+            background-color: white; /* خلفية بيضاء للـ QR لضمان الوضوح */
+            min-width: 138px; /* (128px QR + 5px padding * 2) to prevent collapse before render */
+            min-height: 138px;
+        }
+        .ticket-card .qr-code img,
+        .ticket-card .qr-code canvas { 
+            display: block;
+            margin: auto; 
+        }
+        .ticket-card-info p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        .ticket-card-info strong {
+            color: var(--secondary-color);
+        }
+        .ticket-note {
+            font-size: 0.8em;
+            color: var(--dark-gray);
+            margin-top: 8px;
+            font-style: italic;
+        }
+        .save-ticket-btn {
+            margin-top: 10px !important; 
+            width: calc(100% - 20px); 
+            box-sizing: border-box;
         }
 
-        /* باقي CSS للتقرير كما هو */
         .report-section { margin-top: 20px; }
-        .report-summary p { font-size: 1.1em; margin: 8px 0; }
-        .report-summary span { font-weight: bold; color: var(--accent-color); }
-        .report-table-container { margin-top: 15px; max-height: 300px; overflow-y: auto; }
-        .report-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        .report-table th, .report-table td { border: 1px solid #ddd; padding: 10px; text-align: right; }
-        .report-table th { background-color: var(--medium-gray); font-weight: 600; color: var(--secondary-color); }
+        .report-summary p {
+            font-size: 1.1em;
+            margin: 8px 0;
+        }
+        .report-summary span {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        .report-table-container {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        .report-table th, .report-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: right;
+        }
+        .report-table th {
+            background-color: var(--medium-gray);
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
         .report-table tr:nth-child(even) { background-color: #f9f9f9; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto; }
-        button .loader { margin: 0 0 0 8px; }
-        .container-loader { display: flex; justify-content: center; align-items: center; min-height: 150px; }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto; 
+        }
+        button .loader { margin: 0 0 0 8px; } 
+        .container-loader { 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 150px;
+        }
         .container-loader .loader { width: 40px; height: 40px; border-width: 5px;}
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .message { padding: 15px; margin-bottom: 20px; border-radius: var(--border-radius); font-weight: 500; }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+        }
         .message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;}
         .message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;}
         .message.info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb;}
-        @media (max-width: 768px) { .content-grid { grid-template-columns: 1fr; } header h1 { font-size: 1.8em; } .card h2 { font-size: 1.3em; } button { font-size: 0.9em; padding: 10px 15px;} .ticket-link-entry { flex-direction: column; align-items: flex-start;} .copy-link-btn { margin-top: 8px; margin-left: 0;} }
-        @media print { /* ... نفس إعدادات الطباعة للتقرير ... */ }
 
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr; 
+            }
+            header h1 { font-size: 1.8em; }
+            .card h2 { font-size: 1.3em; }
+            button { font-size: 0.9em; padding: 10px 15px;}
+            .save-ticket-btn {
+                width: 100%;
+            }
+        }
+        @media print {
+            body {
+                background-color: #fff;
+                color: #000;
+                font-size: 12pt; 
+            }
+            .main-container, header, .content-grid, .card {
+                box-shadow: none;
+                border: none;
+                margin: 0;
+                padding: 0;
+                max-width: 100%;
+            }
+            header { display: none; } 
+            .button-group, #ticket-generation #generateBatchButton, #fetchReportButton, #printReportButton:not(.no-print), .save-ticket-btn, .no-print-during-capture { 
+                display: none !important; 
+            }
+            .report-section { margin-top: 0; }
+            .report-table th, .report-table td {
+                padding: 5px;
+                font-size: 10pt;
+            }
+            .ticket-card {
+                page-break-inside: avoid; 
+                border: 1px solid #ccc; 
+                margin-bottom: 10px;
+                background-color: white !important; 
+            }
+             #generatedTicketsContainer {
+                max-height: none;
+                overflow-y: visible;
+            }
+        }
     </style>
 </head>
 <body>
@@ -188,21 +317,21 @@
 
         <div class="content-grid">
             <section id="ticket-generation" class="card">
-                <h2><i class="fas fa-ticket-alt"></i> إنشاء تذاكر (روابط)</h2>
+                <h2><i class="fas fa-ticket-alt"></i> إنشاء تذاكر</h2>
                 
                 <label for="guestNames">أسماء الضيوف (كل اسم في سطر جديد):</label>
                 <textarea id="guestNames" placeholder="مثال:
-زامل حامل
-محمد رسام
-عنان بركات"></textarea>
+عبدالله خالد
+فاطمة علي
+سارة أحمد"></textarea>
                 
                 <div class="button-group">
-                    <button id="generateBatchButton"><i class="fas fa-users-cog"></i> إنشاء روابط التذاكر</button>
+                    <button id="generateBatchButton"><i class="fas fa-users-cog"></i> إنشاء تذاكر للدفعات</button>
                 </div>
 
                 <div id="generationStatus" style="display: none;"></div>
                 <div id="generatedTicketsContainer" style="display: none;">
-                    <!-- روابط التذاكر التي تم إنشاؤها ستظهر هنا -->
+                    <!-- التذاكر التي تم إنشاؤها ستظهر هنا -->
                 </div>
             </section>
 
@@ -222,7 +351,13 @@
                     <h3><i class="fas fa-user-check"></i> قائمة الحضور:</h3>
                     <div class="report-table-container">
                         <table id="attendedGuestsTable" class="report-table">
-                            <thead><tr><th>الاسم</th><th>وقت الوصول</th><th>معرف التذكرة</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>وقت الوصول</th>
+                                    <th>معرف التذكرة (QR)</th>
+                                </tr>
+                            </thead>
                             <tbody></tbody>
                         </table>
                     </div>
@@ -230,7 +365,13 @@
                     <h3 style="margin-top: 25px;"><i class="fas fa-user-times"></i> قائمة الذين لم يحضروا:</h3>
                      <div class="report-table-container">
                         <table id="notAttendedGuestsTable" class="report-table">
-                            <thead><tr><th>الاسم</th><th>حالة التذكرة</th><th>معرف التذكرة</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>حالة التذكرة</th>
+                                    <th>معرف التذكرة (QR)</th>
+                                </tr>
+                            </thead>
                             <tbody></tbody>
                         </table>
                     </div>
@@ -241,14 +382,13 @@
     </div>
 
     <script>
-        // !!! هام جداً: هذا الرابط سيتغير بعد إعادة نشر تطبيق الويب !!!
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyXaVl_IUXMhpuz0ANgfPz2rl9SY5d304x7vlr-yBB1jgHTDTLZt9PBNZ7HKc-5Utaf/exec'; // استبدل هذا بالرابط الجديد بعد النشر
-
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwCGCgGcfA8rXQR-D315RgiM6ZF3dPOS0N_H_Ef1EzoDVQba0WLRPv8EBuB_MK5Hvc/exec'; 
+        
         const guestNamesTextarea = document.getElementById('guestNames');
         const generateBatchButton = document.getElementById('generateBatchButton');
         const generatedTicketsContainer = document.getElementById('generatedTicketsContainer');
         const generationStatusDiv = document.getElementById('generationStatus');
-        
+
         const totalInvitedReportSpan = document.getElementById('totalInvitedReport');
         const totalAttendedReportSpan = document.getElementById('totalAttendedReport');
         const totalNotAttendedReportSpan = document.getElementById('totalNotAttendedReport');
@@ -291,11 +431,6 @@
                 displayMessage(generationStatusDiv, "الرجاء إدخال اسم ضيف واحد على الأقل.", 'error');
                 return;
             }
-             if (WEB_APP_URL === 'YOUR_NEW_WEB_APP_URL_HERE') {
-                alert("يرجى تحديث قيمة WEB_APP_URL في الكود بالرابط الصحيح لتطبيق الويب الخاص بك بعد النشر.");
-                return;
-            }
-
 
             showLoaderInButton(generateBatchButton, true, 'إنشاء...');
             generationStatusDiv.style.display = 'none'; 
@@ -303,80 +438,121 @@
             generatedTicketsContainer.style.display = 'none';
 
             const formData = new FormData();
-            formData.append('action', 'generateTicketsBatch'); // نفس الـ action في Apps Script
+            formData.append('action', 'generateTicketsBatch');
             formData.append('guestNamesList', namesString);
 
             try {
                 const response = await fetch(WEB_APP_URL, { method: 'POST', body: formData });
                 const result = await response.json();
-                showLoaderInButton(generateBatchButton, false);
-
+                
                 if (result.success && result.tickets && result.tickets.length > 0) {
-                    displayMessage(generationStatusDiv, `تم إنشاء ${result.count} تذكرة بنجاح! روابط التذاكر أدناه:`, 'success');
+                    displayMessage(generationStatusDiv, `تم إنشاء ${result.count} تذكرة بنجاح!`, 'success');
                     generatedTicketsContainer.style.display = 'block';
-                    generatedTicketsContainer.innerHTML = '<h3><i class="fas fa-link"></i> روابط التذاكر التي تم إنشاؤها:</h3>';
-
-                    result.tickets.forEach(ticket => {
-                        // افترض أن ticket.qrCodeData أو ticket.id هو المعرف الفريد للتذكرة
-                        const ticketId = ticket.qrCodeData || ticket.id; 
-                        if (!ticketId) {
-                            console.warn("Ticket ID is missing for guest:", ticket.guestName);
-                            return; // تخطي هذه التذكرة إذا لم يكن هناك معرف
-                        }
-                        const ticketLink = `${WEB_APP_URL}?action=viewTicket&ticketId=${encodeURIComponent(ticketId)}`;
-
-                        const ticketEntryDiv = document.createElement('div');
-                        ticketEntryDiv.className = 'ticket-link-entry';
-                        
-                        const ticketInfoP = document.createElement('p');
-                        ticketInfoP.innerHTML = `<strong>${ticket.guestName || 'ضيف بدون اسم'}:</strong> `;
-                        
-                        const linkAnchor = document.createElement('a');
-                        linkAnchor.href = ticketLink;
-                        linkAnchor.textContent = "رابط التذكرة"; // نص الرابط
-                        linkAnchor.target = "_blank"; // فتح في نافذة جديدة
-                        ticketInfoP.appendChild(linkAnchor);
-                        
-                        const copyButton = document.createElement('button');
-                        copyButton.innerHTML = '<i class="fas fa-copy"></i> نسخ';
-                        copyButton.className = 'button-success copy-link-btn';
-                        copyButton.dataset.link = ticketLink;
-
-                        copyButton.addEventListener('click', function() {
-                           const linkToCopy = this.dataset.link;
-                           navigator.clipboard.writeText(linkToCopy).then(() => {
-                               const originalText = this.innerHTML;
-                               this.innerHTML = '<i class="fas fa-check"></i> تم النسخ';
-                               this.disabled = true;
-                               setTimeout(() => { 
-                                   this.innerHTML = originalText;
-                                   this.disabled = false; 
-                               }, 2500);
-                           }).catch(err => {
-                               console.error('فشل نسخ الرابط: ', err);
-                               alert('فشل نسخ الرابط. يرجى نسخه يدويًا.');
-                           });
-                        });
-                        
-                        ticketEntryDiv.appendChild(ticketInfoP);
-                        ticketEntryDiv.appendChild(copyButton);
-                        generatedTicketsContainer.appendChild(ticketEntryDiv);
-                    });
                     
+                    result.tickets.forEach(ticket => {
+                        const ticketCard = document.createElement('div');
+                        ticketCard.className = 'ticket-card';
+                        
+                        const qrDiv = document.createElement('div');
+                        qrDiv.className = 'qr-code';
+                        ticketCard.appendChild(qrDiv); // أضف qrDiv إلى DOM قبل إنشاء QRCode
+                        
+                        new QRCode(qrDiv, {
+                            text: ticket.qrCodeData,
+                            width: 128,
+                            height: 128,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+
+                        const infoDiv = document.createElement('div');
+                        infoDiv.className = 'ticket-card-info';
+                        infoDiv.innerHTML = `
+                            <p><strong>الاسم:</strong> ${ticket.guestName}</p>
+                            <p><strong>معرف QR:</strong> ${ticket.qrCodeData}</p>
+                            <p class="ticket-note"><i class="fas fa-info-circle"></i> هذه التذكرة خاصة بك وصالحة لدخول شخص واحد فقط.</p>
+                        `;
+                        ticketCard.appendChild(infoDiv);
+
+                        const saveButton = document.createElement('button');
+                        saveButton.innerHTML = '<i class="fas fa-download"></i> حفظ كصورة';
+                        saveButton.className = 'button-success save-ticket-btn no-print-during-capture'; 
+                        
+                        saveButton.addEventListener('click', () => {
+                            showLoaderInButton(saveButton, true, 'حفظ...');
+                            saveButton.style.display = 'none'; 
+
+                            // دالة للتحقق من جاهزية الـ QR
+                            const waitForQRCodeReady = (callback, attempts = 0) => {
+                                const maxAttempts = 20; // حوالي 4 ثواني كحد أقصى (20 * 200ms)
+                                const qrElement = qrDiv.querySelector('canvas, img');
+                                
+                                // تحقق أن العنصر موجود، وأنه مرئي وله أبعاد فعلية
+                                if (qrElement && (qrElement.width > 0 || qrElement.naturalWidth > 0) && qrElement.offsetHeight > 0) {
+                                    console.log("QR Code element is ready (has dimensions).");
+                                    // تأخير إضافي صغير جدًا بعد التأكد من الأبعاد، لضمان اكتمال الرسم الفعلي
+                                    setTimeout(callback, 50); 
+                                } else if (attempts < maxAttempts) {
+                                    console.log(`Waiting for QR Code to render... Attempt: ${attempts + 1}`);
+                                    setTimeout(() => waitForQRCodeReady(callback, attempts + 1), 200); 
+                                } else {
+                                    console.error("QR Code did not render in time or is not visible.");
+                                    alert("لم يتمكن من تحميل الباركود بشكل صحيح للصورة. حاول مرة أخرى.");
+                                    callback(true); // استدعاء الـ callback مع إشارة خطأ
+                                }
+                            };
+
+                            waitForQRCodeReady((errorOccurred) => {
+                                if (errorOccurred) {
+                                    saveButton.style.display = 'inline-flex';
+                                    showLoaderInButton(saveButton, false);
+                                    return; // لا تكمل عملية الالتقاط إذا فشل تحميل الباركود
+                                }
+
+                                html2canvas(ticketCard, { 
+                                    scale: 2.5, 
+                                    useCORS: true, 
+                                    logging: false, 
+                                    backgroundColor: getComputedStyle(ticketCard).backgroundColor || '#ffffff',
+                                    allowTaint: true,
+                                    removeContainer: false, // أضفت هذا الخيار
+                                    // windowWidth: ticketCard.scrollWidth, // جرب هذه إذا لزم الأمر
+                                    // windowHeight: ticketCard.scrollHeight,
+                                }).then(canvas => {
+                                    const link = document.createElement('a');
+                                    // تحسين اسم الملف ليشمل الأحرف العربية
+                                    const guestNameSanitized = ticket.guestName.replace(/[^\w\sأ-يÀ-ÖØ-öø-ÿ]/gi, '').replace(/\s+/g, '_');
+                                    const fileName = `تذكرة_${guestNameSanitized}_${ticket.qrCodeData}.png`;
+                                    link.download = fileName;
+                                    link.href = canvas.toDataURL('image/png');
+                                    link.click();
+                                }).catch(err => {
+                                    console.error("خطأ في حفظ التذكرة كصورة:", err);
+                                    alert("حدث خطأ أثناء محاولة حفظ التذكرة كصورة.");
+                                }).finally(() => {
+                                    saveButton.style.display = 'inline-flex'; 
+                                    showLoaderInButton(saveButton, false);
+                                });
+                            });
+                        });
+                        ticketCard.appendChild(saveButton);
+                        generatedTicketsContainer.appendChild(ticketCard);
+                    });
                     guestNamesTextarea.value = ''; 
                     fetchDetailedReport(); 
                 } else {
                     displayMessage(generationStatusDiv, `فشل إنشاء التذاكر: ${result.message || 'خطأ غير معروف'}`, 'error');
                 }
             } catch (error) {
-                showLoaderInButton(generateBatchButton, false);
                 console.error("Error generating batch tickets:", error);
                 displayMessage(generationStatusDiv, `خطأ في الشبكة أو الخادم: ${error.message}`, 'error');
+            } finally {
+                showLoaderInButton(generateBatchButton, false);
             }
         });
 
         async function fetchDetailedReport() {
-            if (WEB_APP_URL === 'YOUR_NEW_WEB_APP_URL_HERE') return; // لا تحاول جلب التقرير إذا لم يتم تحديث الرابط
             showLoaderInButton(fetchReportButton, true, 'تحديث...');
             reportLoader.style.display = 'flex';
             reportDetailsContainer.style.display = 'none'; 
@@ -387,7 +563,6 @@
             try {
                 const response = await fetch(WEB_APP_URL, { method: 'POST', body: formData });
                 const result = await response.json();
-                showLoaderInButton(fetchReportButton, false);
                 reportLoader.style.display = 'none';
 
                 if (result.success) {
@@ -400,7 +575,7 @@
                         const row = attendedGuestsTableBody.insertRow();
                         row.insertCell().textContent = guest.name;
                         row.insertCell().textContent = guest.arrivalTime;
-                        row.insertCell().textContent = guest.qrCode; // هذا هو ticketId
+                        row.insertCell().textContent = guest.qrCode;
                     });
 
                     notAttendedGuestsTableBody.innerHTML = ''; 
@@ -408,17 +583,18 @@
                         const row = notAttendedGuestsTableBody.insertRow();
                         row.insertCell().textContent = guest.name;
                         row.insertCell().textContent = guest.status === 'Valid' ? 'صالحة (لم يحضر)' : guest.status;
-                        row.insertCell().textContent = guest.qrCode; // هذا هو ticketId
+                        row.insertCell().textContent = guest.qrCode;
                     });
                     reportDetailsContainer.style.display = 'block';
                 } else {
                     alert(`فشل جلب التقرير: ${result.message || 'خطأ غير معروف'}`);
                 }
             } catch (error) {
-                showLoaderInButton(fetchReportButton, false);
                 reportLoader.style.display = 'none';
                 console.error("Error fetching detailed report:", error);
                 alert(`خطأ في الشبكة عند جلب التقرير: ${error.message}`);
+            } finally {
+                showLoaderInButton(fetchReportButton, false);
             }
         }
 
@@ -430,14 +606,7 @@
             window.print();
         });
         
-        // جلب التقرير عند تحميل الصفحة إذا كان الرابط محدثًا
-        window.onload = () => {
-            if (WEB_APP_URL !== 'YOUR_NEW_WEB_APP_URL_HERE') {
-                fetchDetailedReport();
-            } else {
-                alert("يرجى تحديث قيمة WEB_APP_URL في كود AdminPanel.html بالرابط الصحيح لتطبيق الويب الخاص بك بعد النشر، ثم أعد تحميل الصفحة.");
-            }
-        };
+        window.onload = fetchDetailedReport;
     </script>
 </body>
 </html>
