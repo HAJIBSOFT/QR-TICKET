@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مسح تذاكر الحفل (jsQR) - تحديد محسن</title>
+    <title>مسح تذاكر الحفل (jsQR) - أوضاع متعددة</title>
 
+    <!-- تحميل مكتبة jsQR من ملف محلي داخل مجلد js -->
     <script src="js/jsQR.js"></script> 
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,34 +30,42 @@
         }
         h1 {
             color: #3498db;
-            margin-bottom: 25px;
+            margin-bottom: 15px; /* تقليل المسافة قليلاً */
             font-size: 2.2em;
+        }
+        #modeSelector {
+            margin-bottom: 15px;
+        }
+        #modeSelector button {
+            padding: 10px 20px;
+            font-size: 0.95em;
+            /* margin-top: 0;  لا حاجة لهنا إذا كان margin-bottom على h1 كافيًا */
         }
         #video-wrapper {
             position: relative;
             width: 100%;
             max-width: 500px;
             margin-bottom: 20px;
-            background-color: rgba(52, 73, 94, 0.9);
-            padding: 10px;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
         }
         #videoElement {
             width: 100%;
-            max-width: 100%;
             height: auto;
             display: block;
-            border: 3px dashed #3498db;
         }
         #detectionCanvas {
             position: absolute;
-            top: 10px; 
-            left: 10px; 
-            pointer-events: none; 
+            top: 0; 
+            left: 0;
+            width: 100%; 
+            height: 100%;
+            pointer-events: none;
+            border: 3px dashed #3498db;
+            box-sizing: border-box;
         }
         #scan-status {
-            margin-top: 10px;
+            margin-top: 0; /* تم إزالة المسافة لأن video-wrapper له margin-bottom */
             padding: 15px;
             background-color: #34495e;
             border-radius: 8px;
@@ -91,6 +100,7 @@
             align-items: center;
             justify-content: center;
         }
+        button:last-child { margin-right: 0; } /* إزالة الهامش الأيمن من آخر زر في المجموعة */
         button i { margin-left: 8px; }
         button:hover { background-color: #2980b9; }
         button:active { transform: translateY(1px); }
@@ -149,7 +159,11 @@
     </style>
 </head>
 <body>
-    <h1><i class="fas fa-qrcode"></i> مسح تذاكر الدخول (jsQR) - تحديد محسن</h1>
+    <h1><i class="fas fa-qrcode"></i> مسح تذاكر الدخول</h1>
+
+    <div id="modeSelector" class="button-group">
+        <button id="toggleModeButton">الوضع الحالي: مسح للدخول (اضغط للتغيير)</button>
+    </div>
 
     <div id="video-wrapper">
         <video id="videoElement" playsinline autoplay muted></video>
@@ -158,19 +172,19 @@
     </div>
     <div id="loadingMessage">جاري تحميل الكاميرا...</div>
     <div id="scan-status" class="status-message">
-        انقر على "بدء المسح" لتفعيل الكاميرا.
+        انقر على "بدء المسح" لتفعيل الكاميرا أو اختر وضع التشغيل.
     </div>
     
     <div class="button-group">
         <button id="startScanButton"><i class="fas fa-camera"></i> بدء المسح بالكاميرا</button>
         <button id="stopScanButton" style="display: none;"><i class="fas fa-stop-circle"></i> إيقاف المسح</button>
-        <button id="showLookupButton" onclick="toggleTicketLookup()"><i class="fas fa-search"></i> البحث اليدوي</button>
+        <button id="showLookupButton"><i class="fas fa-search"></i> البحث اليدوي</button> <!-- onclick سيتم إضافته في JS -->
     </div>
 
     <div id="manualTicketLookup">
         <label for="manualTicketId">أدخل معرّف التذكرة أو بيانات QR:</label>
         <input type="text" id="manualTicketId" placeholder="مثال: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
-        <button onclick="lookupTicketManually()"><i class="fas fa-check-circle"></i> تحقق من التذكرة</button>
+        <button id="manualLookupButton"><i class="fas fa-check-circle"></i> تحقق من التذكرة</button>
     </div>
 
     <audio id="successSound" src="success.mp3" preload="auto"></audio>
@@ -179,18 +193,22 @@
     <audio id="infoSound" src="info.mp3" preload="auto"></audio>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuetKY6kocpOaIGGOpOgbUNnkdknirYjj2yTCE6bxv15OqTO8wxcopKbpMBr0sHC1L/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxBeWk8sRQetXX1kpEj-BXeyy1hRKwf9FJnHefoIlNTSH83pNOw7R4aqnAOp-SW9wVG/exec'; // !!! استبدل هذا !!!
         
         const video = document.getElementById('videoElement');
         const qrAnalysisCanvasElement = document.getElementById('qrAnalysisCanvas');
         const qrAnalysisCanvas = qrAnalysisCanvasElement.getContext('2d');
         const detectionCanvasElement = document.getElementById('detectionCanvas');
         const detectionCanvas = detectionCanvasElement.getContext('2d');
+        const videoWrapper = document.getElementById('video-wrapper'); 
         
         const scanStatusDiv = document.getElementById('scan-status');
         const loadingMessage = document.getElementById('loadingMessage');
         const startScanButton = document.getElementById('startScanButton');
         const stopScanButton = document.getElementById('stopScanButton');
+        const toggleModeButton = document.getElementById('toggleModeButton');
+        const manualLookupButton = document.getElementById('manualLookupButton');
+        const showLookupButton = document.getElementById('showLookupButton'); // زر إظهار/إخفاء البحث اليدوي
 
         const successSound = document.getElementById('successSound');
         const errorSound = document.getElementById('errorSound');
@@ -204,9 +222,14 @@
         let animationFrameId = null;
         let processingQrCode = false; 
         const SCAN_RESTART_DELAY = 1000; 
-        let lastDetectedQrLocation = null; // لتخزين موقع آخر QR Code تم اكتشافه
+        let lastDetectedQrLocation = null; 
+        
+        let currentOperationMode = 'scan'; // 'scan' (للدخول) or 'check' (للتحقق فقط)
+        const SCAN_MODE_TEXT_BTN = "الوضع: مسح للدخول"; // نص أقصر للزر
+        const CHECK_MODE_TEXT_BTN = "الوضع: تحقق من الصلاحية"; // نص أقصر للزر
 
-        function unlockAudio() { /* ... نفس كود فتح الصوت ... */ 
+
+        function unlockAudio() { 
             if (audioUnlocked) return;
             console.log("Attempting to unlock audio...");
             let unlockedCount = 0;
@@ -242,7 +265,7 @@
             }, 500);
         }
 
-        function playSound(soundElement) { /* ... نفس كود تشغيل الصوت ... */
+        function playSound(soundElement) {
             if (!audioUnlocked) {
                 console.warn("Audio not unlocked. Sound may not play.");
             }
@@ -263,22 +286,31 @@
         
         function drawQrBox(location, color = "#2ecc71") {
             if (!location) return;
-            drawLine(location.topLeftCorner, location.topRightCorner, color);
-            drawLine(location.topRightCorner, location.bottomRightCorner, color);
-            drawLine(location.bottomRightCorner, location.bottomLeftCorner, color);
-            drawLine(location.bottomLeftCorner, location.topLeftCorner, color);
-        }
+            const scaleX = detectionCanvasElement.width / qrAnalysisCanvasElement.width;
+            const scaleY = detectionCanvasElement.height / qrAnalysisCanvasElement.height;
 
+            const scaledTopLeft = { x: location.topLeftCorner.x * scaleX, y: location.topLeftCorner.y * scaleY };
+            const scaledTopRight = { x: location.topRightCorner.x * scaleX, y: location.topRightCorner.y * scaleY };
+            const scaledBottomRight = { x: location.bottomRightCorner.x * scaleX, y: location.bottomRightCorner.y * scaleY };
+            const scaledBottomLeft = { x: location.bottomLeftCorner.x * scaleX, y: location.bottomLeftCorner.y * scaleY };
+
+            drawLine(scaledTopLeft, scaledTopRight, color);
+            drawLine(scaledTopRight, scaledBottomRight, color);
+            drawLine(scaledBottomRight, scaledBottomLeft, color);
+            drawLine(scaledBottomLeft, scaledTopLeft, color);
+        }
 
         function tick() {
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 loadingMessage.style.display = 'none';
                 
                 if (qrAnalysisCanvasElement.width !== video.videoWidth || qrAnalysisCanvasElement.height !== video.videoHeight) {
-                    qrAnalysisCanvasElement.height = video.videoHeight;
                     qrAnalysisCanvasElement.width = video.videoWidth;
-                    detectionCanvasElement.height = video.videoHeight;
-                    detectionCanvasElement.width = video.videoWidth;
+                    qrAnalysisCanvasElement.height = video.videoHeight;
+                }
+                if (detectionCanvasElement.width !== videoWrapper.offsetWidth || detectionCanvasElement.height !== videoWrapper.offsetHeight) {
+                    detectionCanvasElement.width = videoWrapper.offsetWidth;
+                    detectionCanvasElement.height = videoWrapper.offsetHeight;
                 }
                 
                 qrAnalysisCanvas.drawImage(video, 0, 0, qrAnalysisCanvasElement.width, qrAnalysisCanvasElement.height);
@@ -288,7 +320,6 @@
                     try {
                         const imageData = qrAnalysisCanvas.getImageData(0, 0, qrAnalysisCanvasElement.width, qrAnalysisCanvasElement.height);
                         if (typeof jsQR === 'undefined') {
-                            // ... (معالجة خطأ jsQR غير محمل) ...
                             console.error("jsQR library is not loaded!");
                             scanStatusDiv.textContent = "خطأ: مكتبة مسح QR (jsQR) لم يتم تحميلها.";
                             scanStatusDiv.className = 'status-message error';
@@ -300,23 +331,21 @@
                         });
 
                         if (code && code.data) {
-                            console.log("Found QR code:", code.data);
-                            lastDetectedQrLocation = code.location; // تخزين الموقع
-                            drawQrBox(lastDetectedQrLocation); // رسم المربع فورًا
+                            console.log("Found QR code:", code.data, "Location:", code.location);
+                            lastDetectedQrLocation = code.location;
+                            drawQrBox(lastDetectedQrLocation);
                             
                             processingQrCode = true; 
-                            processTicketResult(code.data, 'scan');
+                            processTicketResult(code.data, 'scan'); // المصدر هو 'scan' من الكاميرا
                         } else {
-                            lastDetectedQrLocation = null; // مسح الموقع إذا لم يتم العثور على شيء
+                            lastDetectedQrLocation = null;
                         }
                     } catch (err) {
-                        // console.warn("Error during QR decoding:", err); 
                         lastDetectedQrLocation = null;
                     }
                 } else {
-                    // إذا كنا في حالة المعالجة، استمر في رسم المربع الأخير إذا كان موجودًا
                     if (lastDetectedQrLocation) {
-                        drawQrBox(lastDetectedQrLocation, "#f39c12"); // رسم بلون مختلف (أصفر مثلاً) أثناء المعالجة
+                        drawQrBox(lastDetectedQrLocation, "#f39c12"); 
                     }
                 }
             }
@@ -325,9 +354,32 @@
             }
         }
 
-        async function startCamera() { /* ... نفس كود بدء الكاميرا مع تعديل بسيط في onloadedmetadata ... */
-            unlockAudio(); 
+        function updateModeButtonVisuals() {
+            if (currentOperationMode === 'scan') {
+                toggleModeButton.innerHTML = `<i class="fas fa-ticket-alt"></i> ${SCAN_MODE_TEXT_BTN}`;
+                toggleModeButton.style.backgroundColor = '#3498db'; // Blue for scan
+                toggleModeButton.title = "اضغط للتغيير إلى وضع التحقق من الصلاحية فقط";
+            } else { // 'check' mode
+                toggleModeButton.innerHTML = `<i class="fas fa-search-plus"></i> ${CHECK_MODE_TEXT_BTN}`;
+                toggleModeButton.style.backgroundColor = '#e67e22'; // Orange for check
+                toggleModeButton.title = "اضغط للتغيير إلى وضع مسح الدخول";
+            }
+        }
+        
+        toggleModeButton.addEventListener('click', () => {
+            unlockAudio(); // محاولة فتح الصوت عند تغيير الوضع أيضًا
+            if (currentOperationMode === 'scan') {
+                currentOperationMode = 'check';
+            } else {
+                currentOperationMode = 'scan';
+            }
+            updateModeButtonVisuals();
+            scanStatusDiv.textContent = `تم تغيير الوضع إلى: ${currentOperationMode === 'scan' ? 'مسح للدخول' : 'التحقق من الصلاحية'}.`;
+            scanStatusDiv.className = 'status-message info';
+            console.log("Operation mode changed to:", currentOperationMode);
+        });
 
+        async function startCamera() {
             if (typeof jsQR === 'undefined') {
                 console.error("jsQR library is not loaded! Cannot start camera.");
                 scanStatusDiv.textContent = "خطأ حرج: مكتبة مسح QR (jsQR) لم يتم تحميلها.";
@@ -335,11 +387,7 @@
                 startScanButton.disabled = true;
                 return;
             }
-
-            if (stream && stream.active) {
-                console.log("Camera already active.");
-                return;
-            }
+            if (stream && stream.active) return;
 
             loadingMessage.style.display = 'block';
             scanStatusDiv.textContent = "جاري طلب إذن الكاميرا...";
@@ -351,25 +399,25 @@
                 const constraints = {
                     video: {
                         facingMode: "environment",
-                        width: { ideal: 640 }, 
-                        height: { ideal: 480 }
+                        width: { ideal: 1280, max: 1920 }, 
+                        height: { ideal: 720, max: 1080 }
                     }
                 };
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
                 video.onloadedmetadata = () => { 
                     video.play();
-                    // تأكد من أن أبعاد الفيديو الفعلية تستخدم لضبط الـ canvas
                     const track = stream.getVideoTracks()[0];
                     const settings = track.getSettings();
-                    const actualWidth = settings.width || video.videoWidth;
-                    const actualHeight = settings.height || video.videoHeight;
+                    const streamWidth = settings.width || video.videoWidth;
+                    const streamHeight = settings.height || video.videoHeight;
 
-                    qrAnalysisCanvasElement.height = actualHeight;
-                    qrAnalysisCanvasElement.width = actualWidth;
-                    detectionCanvasElement.height = actualHeight;
-                    detectionCanvasElement.width = actualWidth;
-                    console.log(`Camera started with resolution: ${actualWidth}x${actualHeight}`);
+                    qrAnalysisCanvasElement.width = streamWidth;
+                    qrAnalysisCanvasElement.height = streamHeight;
+                    
+                    detectionCanvasElement.width = videoWrapper.offsetWidth;
+                    detectionCanvasElement.height = videoWrapper.offsetHeight;
+                    console.log(`QR Analysis: ${streamWidth}x${streamHeight}, Detection: ${videoWrapper.offsetWidth}x${videoWrapper.offsetHeight}`);
 
                     startScanButton.style.display = 'none';
                     stopScanButton.style.display = 'inline-flex';
@@ -391,16 +439,13 @@
             }
         }
 
-        function stopCamera() { /* ... نفس كود إيقاف الكاميرا مع إضافة مسح lastDetectedQrLocation ... */
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
+        function stopCamera() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
                 video.srcObject = null;
-                console.log("Camera stopped.");
             }
             detectionCanvas.clearRect(0, 0, detectionCanvasElement.width, detectionCanvasElement.height);
             loadingMessage.style.display = 'none';
@@ -411,18 +456,26 @@
             startScanButton.style.display = 'inline-flex';
             stopScanButton.style.display = 'none';
             processingQrCode = false;
-            lastDetectedQrLocation = null; // مسح الموقع عند إيقاف الكاميرا
+            lastDetectedQrLocation = null;
         }
 
-        startScanButton.addEventListener('click', startCamera);
+        startScanButton.addEventListener('click', () => { unlockAudio(); startCamera(); });
         stopScanButton.addEventListener('click', stopCamera);
 
-        async function processTicketResult(decodedText, actionType = 'scan') { /* ... نفس كود معالجة النتيجة ... */
-            const isManualLookup = actionType === 'lookup';
-            const endpointAction = isManualLookup ? 'lookupTicket' : 'scanTicket';
+        async function processTicketResult(decodedText, inputSource = 'scan') {
+            let endpointAction;
+            if (currentOperationMode === 'scan') { // وضع مسح الدخول
+                endpointAction = (inputSource === 'manual') ? 'lookupTicket' : 'scanTicket';
+            } else { // currentOperationMode === 'check' (وضع التحقق فقط)
+                endpointAction = 'checkTicketStatus';
+            }
 
-            scanStatusDiv.innerHTML = `جاري التحقق: <strong>${decodedText}</strong>...`;
-            scanStatusDiv.className = 'status-message';
+            let displayText = `جاري التحقق`;
+            if (currentOperationMode === 'scan' && inputSource === 'scan') displayText = 'جاري تسجيل الدخول';
+            else if (currentOperationMode === 'check') displayText = 'جاري فحص الصلاحية';
+            
+            scanStatusDiv.innerHTML = `${displayText}: <strong>${decodedText}</strong>...`;
+            scanStatusDiv.className = 'status-message info'; // Start with info
 
             const formData = new FormData();
             formData.append('action', endpointAction);
@@ -433,27 +486,45 @@
                 const result = await response.json();
                 console.log(`Response from ${endpointAction}:`, result);
 
+                let messageHtml = '';
+                let messageClass = 'status-message';
+                let soundToPlay = null;
+
                 if (result.success) {
-                    if (result.status === "valid_and_used") {
-                        scanStatusDiv.innerHTML = `<strong><i class="fas fa-check-circle"></i> ${result.message}</strong><br>الضيف: ${result.guestName || 'غير محدد'}`;
-                        scanStatusDiv.className = 'status-message success';
-                        playSound(successSound);
-                    } else if (result.status === "valid_not_used") {
-                        scanStatusDiv.innerHTML = `<strong><i class="fas fa-info-circle"></i> ${result.message}</strong><br>الضيف: ${result.guestName || 'غير محدد'}<br>تاريخ الإنشاء: ${result.generatedAt || 'N/A'}`;
-                        scanStatusDiv.className = 'status-message info';
-                        playSound(infoSound);
+                    if (result.status === "valid_and_used") { // من scanTicket
+                        messageHtml = `<strong><i class="fas fa-check-circle"></i> ${result.message}</strong><br>الضيف: ${result.guestName || 'غير محدد'}<br>وقت الدخول: ${result.scannedAt || 'N/A'}`;
+                        messageClass += ' success';
+                        soundToPlay = successSound;
+                    } else if (result.status === "valid_not_used") { // من lookupTicket أو checkTicketStatus
+                        messageHtml = `<strong><i class="fas fa-check-square"></i> تذكرة صالحة (غير مستخدمة)</strong><br>الضيف: ${result.guestName || 'غير محدد'}<br>تاريخ الإنشاء: ${result.generatedAt || 'N/A'}`;
+                        messageClass += ' success'; // تظهر كنجاح لأنها صالحة
+                        soundToPlay = infoSound;
+                    } else if (result.status === "already_used") { // من lookupTicket أو checkTicketStatus
+                         messageHtml = `<strong><i class="fas fa-exclamation-triangle"></i> تذكرة مستخدمة بالفعل</strong><br>الضيف: ${result.guestName || 'غير محدد'}<br>وقت الدخول: ${result.scannedAt || 'N/A'}`;
+                         messageClass += ' warning';
+                         soundToPlay = usedSound;
+                    } else { // حالات أخرى ناجحة غير متوقعة (نادر)
+                        messageHtml = `<strong><i class="fas fa-info-circle"></i> ${result.message || 'تمت العملية بنجاح'}</strong>`;
+                        messageClass += ' info';
+                        soundToPlay = infoSound;
                     }
-                } else { 
-                    scanStatusDiv.innerHTML = `<strong><i class="fas fa-exclamation-triangle"></i> ${result.message}</strong>`;
-                    if (result.status === "already_used") {
-                        scanStatusDiv.innerHTML += `<br>الضيف: ${result.guestName || 'غير محدد'}<br>وقت الدخول: ${result.scannedAt}`;
-                        scanStatusDiv.className = 'status-message warning';
-                        playSound(usedSound);
-                    } else { 
-                        scanStatusDiv.className = 'status-message error';
-                        playSound(errorSound);
+                } else { // result.success is false
+                    messageHtml = `<strong><i class="fas fa-times-circle"></i> ${result.message || 'فشلت العملية'}</strong>`;
+                    if (result.status === "not_found") {
+                        messageClass += ' error';
+                    } else if (result.status === "already_used" && endpointAction === 'scanTicket') { 
+                        // هذا مهم: إذا كان scanTicket وفشلت لأنها مستخدمة، فهي خطأ
+                        messageHtml += `<br>الضيف: ${result.guestName || 'غير محدد'}<br>وقت الدخول: ${result.scannedAt || 'N/A'}`;
+                        messageClass += ' error'; // أو warning حسب الرغبة، لكن error أوضح أنها لم تسجل دخول
+                    } else {
+                        messageClass += ' error';
                     }
+                    soundToPlay = errorSound;
                 }
+                scanStatusDiv.innerHTML = messageHtml;
+                scanStatusDiv.className = messageClass;
+                if (soundToPlay) playSound(soundToPlay);
+
             } catch (error) {
                 console.error("Network or Fetch error:", error);
                 scanStatusDiv.innerHTML = `<strong><i class="fas fa-wifi-slash"></i> خطأ في الاتصال بالخادم:</strong> ${error.message}`;
@@ -461,40 +532,40 @@
                 playSound(errorSound);
             }
 
-            if (!isManualLookup) {
+            if (inputSource === 'scan') {
                 setTimeout(() => {
                     processingQrCode = false; 
-                    lastDetectedQrLocation = null; // امسح الموقع المخزن بعد انتهاء المعالجة والتأخير
+                    lastDetectedQrLocation = null;
                     if (stream && stream.active && !animationFrameId) {
-                        console.log("Restarting scan loop after processing (if stopped).");
                         animationFrameId = requestAnimationFrame(tick);
-                    } else if (!stream || !stream.active) {
-                        console.log("Scan loop not restarted as camera is off or intended to be off.");
                     }
                 }, SCAN_RESTART_DELAY); 
-            } else {
-                // للبحث اليدوي، تأكد من مسح أي مربع تحديد قديم
+            } else { 
+                processingQrCode = false; 
                 lastDetectedQrLocation = null;
                 detectionCanvas.clearRect(0, 0, detectionCanvasElement.width, detectionCanvasElement.height);
             }
         }
 
-        function toggleTicketLookup() { /* ... نفس كود تبديل البحث اليدوي ... */
+        function toggleManualLookup() { // اسم الدالة لتوضيح الغرض
             const lookupDiv = document.getElementById('manualTicketLookup');
-            const showButton = document.getElementById('showLookupButton');
+            // const showButton = document.getElementById('showLookupButton'); // لا نحتاج لتغيير نص هذا الزر
             if (lookupDiv.style.display === 'none') {
                 lookupDiv.style.display = 'block';
-                showButton.innerHTML = '<i class="fas fa-times-circle"></i> إغلاق البحث اليدوي';
+                // showButton.innerHTML = '<i class="fas fa-times-circle"></i> إغلاق البحث اليدوي'; // لا حاجة لتغيير النص
                 if (stream && stream.active) { 
                     stopCamera(); 
                 }
             } else {
                 lookupDiv.style.display = 'none';
-                showButton.innerHTML = '<i class="fas fa-search"></i> البحث اليدوي';
+                // showButton.innerHTML = '<i class="fas fa-search"></i> البحث اليدوي'; // لا حاجة لتغيير النص
             }
         }
+        showLookupButton.addEventListener('click', toggleManualLookup);
 
-        async function lookupTicketManually() { /* ... نفس كود البحث اليدوي ... */
+
+        manualLookupButton.addEventListener('click', () => {
+            unlockAudio();
             const ticketId = document.getElementById('manualTicketId').value.trim();
             if (!ticketId) {
                 scanStatusDiv.textContent = "الرجاء إدخال معرّف التذكرة أو بيانات QR.";
@@ -502,14 +573,14 @@
                 playSound(errorSound);
                 return;
             }
-            if (stream && stream.active) {
+            if (stream && stream.active) { // إذا كانت الكاميرا تعمل، أوقفها
                 stopCamera();
             }
-            processTicketResult(ticketId, 'lookup');
-        }
+            processTicketResult(ticketId, 'manual');
+        });
         
-        scanStatusDiv.textContent = "انقر على 'بدء المسح' لتفعيل الكاميرا.";
-
+        updateModeButtonVisuals(); // تهيئة نص زر الوضع عند التحميل
+        scanStatusDiv.textContent = "انقر على 'بدء المسح' لتفعيل الكاميرا أو اختر وضع التشغيل.";
     </script>
 </body>
 </html>
