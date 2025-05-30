@@ -3,17 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مسح تذاكر الحفل (2jsQR) - سريع</title>
+    <title>مسح تذاكر الحفل (jsQR) - مع تحديد</title>
 
-    <!-- تحميل مكتبة jsQR من ملف محلي داخل مجلد js -->
     <script src="js/jsQR.js"></script> 
 
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <style>
@@ -36,26 +32,34 @@
             margin-bottom: 25px;
             font-size: 2.2em;
         }
-        #video-container {
-            background-color: rgba(52, 73, 94, 0.9);
+        /* حاوية الفيديو والرسم */
+        #video-wrapper {
+            position: relative; /* لجعل canvas التحديد يتراكب بشكل صحيح */
+            width: 100%;
+            max-width: 500px; /* أو أي عرض تفضله */
+            margin-bottom: 20px;
+            background-color: rgba(52, 73, 94, 0.9); /* نفس خلفية qr-reader-container القديمة */
             padding: 10px;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 20px;
-            position: relative;
         }
         #videoElement {
             width: 100%;
             max-width: 100%;
             height: auto;
-            border: 3px dashed #3498db;
-            background-color: #1a252f;
-            display: block;
+            display: block; /* لإزالة أي مسافة إضافية أسفل الفيديو */
+            border: 3px dashed #3498db; /* حد الكاميرا */
+        }
+        /* Canvas لرسم مربع التحديد فوق الفيديو */
+        #detectionCanvas {
+            position: absolute;
+            top: 10px; /* يجب أن يتطابق مع padding حاوية video-wrapper */
+            left: 10px; /* يجب أن يتطابق مع padding حاوية video-wrapper */
+            /* الأبعاد سيتم ضبطها بواسطة JavaScript لتطابق الفيديو */
+            pointer-events: none; /* لجعل النقرات تمر عبره إلى الفيديو إذا لزم الأمر */
         }
         #scan-status {
-            margin-top: 10px;
+            margin-top: 10px; /* تم تقليل المسافة لأن الحاوية أصبحت video-wrapper */
             padding: 15px;
             background-color: #34495e;
             border-radius: 8px;
@@ -148,11 +152,12 @@
     </style>
 </head>
 <body>
-    <h1><i class="fas fa-qrcode"></i> مسح تذاكر الدخول (jsQR) - سريع</h1>
+    <h1><i class="fas fa-qrcode"></i> مسح تذاكر الدخول (jsQR) - مع تحديد</h1>
 
-    <div id="video-container">
+    <div id="video-wrapper">
         <video id="videoElement" playsinline autoplay muted></video>
-        <canvas id="qrCanvas" style="display: none;"></canvas> 
+        <canvas id="detectionCanvas"></canvas> <!-- Canvas للتحديد فوق الفيديو -->
+        <canvas id="qrAnalysisCanvas" style="display: none;"></canvas> <!-- Canvas لتحليل QR، مخفي -->
     </div>
     <div id="loadingMessage">جاري تحميل الكاميرا...</div>
     <div id="scan-status" class="status-message">
@@ -178,11 +183,14 @@
     <audio id="infoSound" src="info.mp3" preload="auto"></audio>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuetKY6kocpOaIGGOpOgbUNnkdknirYjj2yTCE6bxv15OqTO8wxcopKbpMBr0sHC1L/exec'; // !!! استبدل هذا !!!
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuetKY6kocpOaIGGOpOgbUNnkdknirYjj2yTCE6bxv15OqTO8wxcopKbpMBr0sHC1L/exec';
         
         const video = document.getElementById('videoElement');
-        const canvasElement = document.getElementById('qrCanvas');
-        const canvas = canvasElement.getContext('2d');
+        const qrAnalysisCanvasElement = document.getElementById('qrAnalysisCanvas'); // لتحليل QR
+        const qrAnalysisCanvas = qrAnalysisCanvasElement.getContext('2d');
+        const detectionCanvasElement = document.getElementById('detectionCanvas'); // لرسم التحديد
+        const detectionCanvas = detectionCanvasElement.getContext('2d');
+        
         const scanStatusDiv = document.getElementById('scan-status');
         const loadingMessage = document.getElementById('loadingMessage');
         const startScanButton = document.getElementById('startScanButton');
@@ -193,28 +201,25 @@
         const usedSound = document.getElementById('usedSound');
         const infoSound = document.getElementById('infoSound');
         
-        // قائمة بجميع عناصر الصوت لتهيئتها عند أول تفاعل
         const audioElements = [successSound, errorSound, usedSound, infoSound];
-        let audioUnlocked = false; // لتتبع ما إذا تم فتح الصوت
+        let audioUnlocked = false;
 
         let stream = null;
         let animationFrameId = null;
         let processingQrCode = false; 
-        const SCAN_RESTART_DELAY = 1000; // تقليل التأخير إلى ثانية واحدة (1000 مللي ثانية)
+        const SCAN_RESTART_DELAY = 1000; 
 
-        // دالة لفتح الصوت (تستدعى عند أول نقرة)
         function unlockAudio() {
             if (audioUnlocked) return;
             console.log("Attempting to unlock audio...");
             let unlockedCount = 0;
             audioElements.forEach(audio => {
                 if (audio && typeof audio.play === 'function') {
-                    // خدعة بسيطة لتشغيل وإيقاف الصوت فورًا لفتح السياق
                     const promise = audio.play();
                     if (promise !== undefined) {
                         promise.then(_ => {
                             audio.pause();
-                            audio.currentTime = 0; // Reset audio to start
+                            audio.currentTime = 0;
                             unlockedCount++;
                             if (unlockedCount === audioElements.length) {
                                 console.log("All audio elements unlocked.");
@@ -222,19 +227,14 @@
                             }
                         }).catch(error => {
                             console.warn("Error unlocking audio for an element:", error, audio);
-                            // حتى لو فشل واحد، حاول مع البقية
-                            if (unlockedCount + 1 === audioElements.length && unlockedCount > 0) { // إذا كان هذا هو الأخير وفشل، ولكن البعض الآخر نجح
+                            if (unlockedCount + 1 === audioElements.length && unlockedCount > 0) {
                                  console.log("Some audio elements unlocked.");
-                                 audioUnlocked = true; // اعتبره مفتوحًا إذا نجح البعض على الأقل
+                                 audioUnlocked = true;
                             }
                         });
-                    } else {
-                        // إذا لم يتم إرجاع Promise، فهذا يعني أن المتصفح قديم جدًا أو لا يدعم التشغيل البرمجي
-                        console.warn("Audio play did not return a promise for:", audio);
                     }
                 }
             });
-             // كحل احتياطي إذا لم تعمل الـ promises بشكل صحيح أو لم يتم إرجاعها
             setTimeout(() => {
                 if (!audioUnlocked && unlockedCount > 0) {
                     console.log("Audio considered unlocked due to some successes (fallback).");
@@ -245,11 +245,9 @@
             }, 500);
         }
 
-
         function playSound(soundElement) {
             if (!audioUnlocked) {
                 console.warn("Audio not unlocked. Sound may not play.");
-                // يمكنك محاولة فتح الصوت هنا مرة أخرى، ولكن يفضل أن يكون عند تفاعل المستخدم
             }
             if (soundElement && typeof soundElement.play === 'function') {
                 soundElement.currentTime = 0;
@@ -257,39 +255,60 @@
             }
         }
 
+        function drawLine(begin, end, color) {
+            detectionCanvas.beginPath();
+            detectionCanvas.moveTo(begin.x, begin.y);
+            detectionCanvas.lineTo(end.x, end.y);
+            detectionCanvas.lineWidth = 4;
+            detectionCanvas.strokeStyle = color;
+            detectionCanvas.stroke();
+        }
+
         function tick() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA && !processingQrCode) {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 loadingMessage.style.display = 'none';
-                // ضبط أبعاد canvas مرة واحدة عند بدء تشغيل الفيديو أو عند تغيير حجمه
-                if (canvasElement.width !== video.videoWidth || canvasElement.height !== video.videoHeight) {
-                    canvasElement.height = video.videoHeight;
-                    canvasElement.width = video.videoWidth;
+                
+                if (qrAnalysisCanvasElement.width !== video.videoWidth || qrAnalysisCanvasElement.height !== video.videoHeight) {
+                    qrAnalysisCanvasElement.height = video.videoHeight;
+                    qrAnalysisCanvasElement.width = video.videoWidth;
+                    detectionCanvasElement.height = video.videoHeight; // مزامنة أبعاد canvas التحديد
+                    detectionCanvasElement.width = video.videoWidth;
                 }
                 
-                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                // 1. ارسم الفيديو على canvas التحليل (المخفي)
+                qrAnalysisCanvas.drawImage(video, 0, 0, qrAnalysisCanvasElement.width, qrAnalysisCanvasElement.height);
                 
-                try {
-                    const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                    if (typeof jsQR === 'undefined') {
-                        console.error("jsQR library is not loaded!");
-                        scanStatusDiv.textContent = "خطأ: مكتبة مسح QR (jsQR) لم يتم تحميلها.";
-                        scanStatusDiv.className = 'status-message error';
-                        stopCamera();
-                        return;
-                    }
-                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "dontInvert",
-                    });
+                // 2. امسح canvas التحديد في كل إطار
+                detectionCanvas.clearRect(0, 0, detectionCanvasElement.width, detectionCanvasElement.height);
 
-                    if (code && code.data) {
-                        console.log("Found QR code:", code.data);
-                        processingQrCode = true; 
-                        // لا تحدث scanStatusDiv هنا مباشرة، دع processTicketResult تتولى ذلك
-                        processTicketResult(code.data, 'scan');
+                if (!processingQrCode) { // فقط قم بالتحليل إذا لم نكن نعالج رمزًا بالفعل
+                    try {
+                        const imageData = qrAnalysisCanvas.getImageData(0, 0, qrAnalysisCanvasElement.width, qrAnalysisCanvasElement.height);
+                        if (typeof jsQR === 'undefined') {
+                            console.error("jsQR library is not loaded!");
+                            scanStatusDiv.textContent = "خطأ: مكتبة مسح QR (jsQR) لم يتم تحميلها.";
+                            scanStatusDiv.className = 'status-message error';
+                            stopCamera();
+                            return;
+                        }
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: "dontInvert",
+                        });
+
+                        if (code && code.data) {
+                            console.log("Found QR code:", code.data);
+                            // 3. ارسم مربع التحديد على canvas التحديد (المرئي)
+                            drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#2ecc71"); // أخضر
+                            drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#2ecc71");
+                            drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#2ecc71");
+                            drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#2ecc71");
+                            
+                            processingQrCode = true; 
+                            processTicketResult(code.data, 'scan');
+                        }
+                    } catch (err) {
+                        // console.error("Error during QR decoding:", err); 
                     }
-                } catch (err) {
-                    // console.error("Error during QR decoding:", err); 
-                    // لا داعي لطباعة هذا الخطأ بشكل متكرر إذا لم يتم العثور على QR
                 }
             }
             if (stream && stream.active) { 
@@ -298,7 +317,7 @@
         }
 
         async function startCamera() {
-            unlockAudio(); // محاولة فتح الصوت عند النقر على زر البدء
+            unlockAudio(); 
 
             if (typeof jsQR === 'undefined') {
                 console.error("jsQR library is not loaded! Cannot start camera.");
@@ -325,16 +344,16 @@
                         facingMode: "environment",
                         width: { ideal: 640 }, 
                         height: { ideal: 480 }
-                        // يمكنك إضافة frameRate إذا أردت: frameRate: { ideal: 15 }
                     }
                 };
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
-                video.onloadedmetadata = () => { // تأكد من تحميل بيانات الفيديو قبل تشغيل tick
+                video.onloadedmetadata = () => { 
                     video.play();
-                    // ضبط أبعاد canvas الأولية
-                    canvasElement.height = video.videoHeight;
-                    canvasElement.width = video.videoWidth;
+                    qrAnalysisCanvasElement.height = video.videoHeight; // ضبط canvas التحليل
+                    qrAnalysisCanvasElement.width = video.videoWidth;
+                    detectionCanvasElement.height = video.videoHeight; // ضبط canvas التحديد
+                    detectionCanvasElement.width = video.videoWidth;
                     console.log(`Camera started with resolution: ${video.videoWidth}x${video.videoHeight}`);
 
                     startScanButton.style.display = 'none';
@@ -368,6 +387,8 @@
                 video.srcObject = null;
                 console.log("Camera stopped.");
             }
+            // امسح canvas التحديد عند إيقاف الكاميرا
+            detectionCanvas.clearRect(0, 0, detectionCanvasElement.width, detectionCanvasElement.height);
             loadingMessage.style.display = 'none';
             scanStatusDiv.textContent = "تم إيقاف المسح. انقر على 'بدء المسح' مرة أخرى.";
             scanStatusDiv.className = 'status-message';
@@ -459,7 +480,7 @@
             if (!ticketId) {
                 scanStatusDiv.textContent = "الرجاء إدخال معرّف التذكرة أو بيانات QR.";
                 scanStatusDiv.className = 'status-message warning';
-                playSound(errorSound); // الصوت هنا قد يعمل لأنه بعد تفاعل محتمل مع حقل الإدخال
+                playSound(errorSound);
                 return;
             }
             if (stream && stream.active) {
