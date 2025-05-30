@@ -4,287 +4,440 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة تحكم المدير - تذاكر الحفل</title>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <!-- Google Fonts -->
+    <!-- لا نحتاج qrcode.js أو html2canvas هنا الآن -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome (استبدل YOUR_KIT_CODE أو استخدم CDN العام) -->
-    <script src="https://kit.fontawesome.com/YOUR_KIT_CODE.js" crossorigin="anonymous"></script>
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"> -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-gray: #f0f2f5;
+            --medium-gray: #e9ecef;
+            --dark-gray: #555;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
         body {
-            font-family: 'Cairo', 'Tajawal', sans-serif;
+            font-family: 'Tajawal', 'Cairo', sans-serif;
             margin: 0;
-            background-color: #f0f2f5;
-            color: #333;
-            line-height: 1.6;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            line-height: 1.7;
+            font-size: 16px;
         }
-        .container {
-            max-width: 800px;
-            margin: 30px auto;
-            background-color: #fff;
-            padding: 25px 30px;
-            border-radius: 12px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
         }
-        h1, h2 {
-            color: #2c3e50;
+
+        header {
+            width: 100%;
+            max-width: 1100px;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            box-shadow: var(--box-shadow);
             margin-bottom: 20px;
         }
-        h1 { text-align: center; font-size: 2.2em; margin-bottom: 30px; color: #3498db;}
-        h2 { font-size: 1.6em; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-top: 30px;}
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #555;
+
+        header h1 { margin: 0; font-size: 2em; font-weight: 600; }
+        header h1 i { margin-left: 10px; }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1100px;
         }
-        input[type="text"] {
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            font-size: 1.5em;
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--medium-gray);
+            font-weight: 600;
+        }
+        .card h2 i { margin-left: 8px; }
+
+        label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--dark-gray); }
+
+        input[type="text"],
+        textarea {
             padding: 12px 15px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-            width: calc(100% - 32px);
+            margin-bottom: 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid #ccc;
+            width: 100%;
             box-sizing: border-box;
-            font-size: 1em;
+            font-size: 0.95em;
             transition: border-color 0.3s, box-shadow 0.3s;
+            font-family: 'Tajawal', sans-serif;
         }
-        input[type="text"]:focus {
-            border-color: #3498db;
-            box-shadow: 0 0 0 0.2rem rgba(52,152,219,.25);
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
             outline: none;
         }
+        textarea { min-height: 120px; resize: vertical; }
+
         button {
-            padding: 12px 25px;
+            padding: 10px 20px;
             margin-right: 10px;
-            margin-bottom: 15px;
-            border-radius: 6px;
+            margin-bottom: 10px;
+            border-radius: var(--border-radius);
             border: none;
-            background-color: #3498db;
+            background-color: var(--primary-color);
             color: white;
             cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
+            font-size: 0.95em;
+            font-weight: 600;
             transition: background-color 0.2s ease, transform 0.1s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
         }
-        button i { margin-left: 8px; } /* أيقونة على اليسار في RTL */
-        button:hover {
-            background-color: #2980b9;
-        }
-        button:active {
-            transform: translateY(1px);
-        }
-        #qrcodeContainer {
-            margin-top: 25px;
-            text-align: center;
-            padding: 20px;
+        button:last-child { margin-right: 0; }
+        button i { margin-left: 8px; }
+        button:hover { background-color: #2980b9; }
+        button:active { transform: translateY(1px); }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+        .button-secondary { background-color: #95a5a6; }
+        .button-secondary:hover { background-color: #7f8c8d; }
+        .button-success { background-color: #2ecc71; } /* يمكن استخدامه لزر النسخ */
+        .button-success:hover { background-color: #27ae60; }
+        
+        #generatedTicketsContainer {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            padding: 10px;
             background-color: #f9f9f9;
-            border-radius: 8px;
-            border: 1px solid #eee;
-            min-height: 220px; /* لضمان وجود مساحة حتى عند التحميل */
+        }
+        .ticket-link-entry {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
         }
-        #qrcodeContainer img {
-            border: 2px solid #3498db;
-            padding: 5px;
-            background-color: white;
-            border-radius: 4px;
+        .ticket-link-entry:last-child { border-bottom: none; }
+        .ticket-link-entry p { margin: 0; flex-grow: 1; }
+        .ticket-link-entry a { color: var(--primary-color); text-decoration: none; word-break: break-all; }
+        .ticket-link-entry a:hover { text-decoration: underline; }
+        .copy-link-btn {
+            margin-right: 0; /* إزالة الهامش الأيمن */
+            margin-left: 10px; /* إضافة هامش أيسر بدلاً منه */
+            padding: 6px 12px;
+            font-size: 0.85em;
         }
-        #ticketInfo {
-            margin-top: 15px;
-            font-size: 0.95em;
-            color: #444;
-            background-color: #e9ecef;
-            padding: 15px;
-            border-radius: 6px;
-        }
-        #ticketInfo p { margin: 8px 0; }
-        #ticketInfo i { margin-left: 5px; color: #3498db; }
-        .report {
-            margin-top: 40px;
-            padding: 20px;
-            background-color: #e9ecef;
-            border-radius: 8px;
-        }
-        .report p {
-            font-size: 1.1em;
-            color: #333;
-            margin: 10px 0;
-        }
-        .report span {
-            font-weight: bold;
-            color: #e74c3c;
-            font-size: 1.2em;
-        }
-        .report button {
-            background-color: #2ecc71;
-        }
-        .report button:hover {
-            background-color: #27ae60;
-        }
-        #saveQrButton {
-            background-color: #1abc9c;
-        }
-        #saveQrButton:hover {
-            background-color: #16a085;
-        }
-        .loader {
-            border: 5px solid #f3f3f3; /* Light grey */
-            border-top: 5px solid #3498db; /* Blue */
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+
+        /* باقي CSS للتقرير كما هو */
+        .report-section { margin-top: 20px; }
+        .report-summary p { font-size: 1.1em; margin: 8px 0; }
+        .report-summary span { font-weight: bold; color: var(--accent-color); }
+        .report-table-container { margin-top: 15px; max-height: 300px; overflow-y: auto; }
+        .report-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .report-table th, .report-table td { border: 1px solid #ddd; padding: 10px; text-align: right; }
+        .report-table th { background-color: var(--medium-gray); font-weight: 600; color: var(--secondary-color); }
+        .report-table tr:nth-child(even) { background-color: #f9f9f9; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto; }
+        button .loader { margin: 0 0 0 8px; }
+        .container-loader { display: flex; justify-content: center; align-items: center; min-height: 150px; }
+        .container-loader .loader { width: 40px; height: 40px; border-width: 5px;}
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .message { padding: 15px; margin-bottom: 20px; border-radius: var(--border-radius); font-weight: 500; }
+        .message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;}
+        .message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;}
+        .message.info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb;}
+        @media (max-width: 768px) { .content-grid { grid-template-columns: 1fr; } header h1 { font-size: 1.8em; } .card h2 { font-size: 1.3em; } button { font-size: 0.9em; padding: 10px 15px;} .ticket-link-entry { flex-direction: column; align-items: flex-start;} .copy-link-btn { margin-top: 8px; margin-left: 0;} }
+        @media print { /* ... نفس إعدادات الطباعة للتقرير ... */ }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1><i class="fas fa-cogs"></i> لوحة تحكم المدير</h1>
+    <div class="main-container">
+        <header>
+            <h1><i class="fas fa-user-shield"></i> لوحة تحكم المدير</h1>
+        </header>
 
-        <section id="ticket-generation">
-            <h2><i class="fas fa-ticket-alt"></i> إنشاء تذكرة جديدة</h2>
-            <label for="guestName">اسم الضيف (اختياري):</label>
-            <input type="text" id="guestName" placeholder="مثال: عبدالله خالد">
-            <button onclick="generateTicket()"><i class="fas fa-plus-circle"></i> إنشاء ومشاركة تذكرة</button>
-            <button onclick="saveQRCodeImage()" id="saveQrButton" style="display: none;"><i class="fas fa-save"></i> حفظ صورة التذكرة</button>
+        <div class="content-grid">
+            <section id="ticket-generation" class="card">
+                <h2><i class="fas fa-ticket-alt"></i> إنشاء تذاكر (روابط)</h2>
+                
+                <label for="guestNames">أسماء الضيوف (كل اسم في سطر جديد):</label>
+                <textarea id="guestNames" placeholder="مثال:
+عبدالله خالد
+فاطمة علي
+سارة أحمد"></textarea>
+                
+                <div class="button-group">
+                    <button id="generateBatchButton"><i class="fas fa-users-cog"></i> إنشاء روابط التذاكر</button>
+                </div>
 
-            <div id="qrcodeContainer">
-                <p>سيظهر QR Code هنا بعد الإنشاء.</p>
-            </div>
-            <div id="ticketInfo" style="display: none;">
-                <!-- معلومات التذكرة ستظهر هنا -->
-            </div>
-        </section>
+                <div id="generationStatus" style="display: none;"></div>
+                <div id="generatedTicketsContainer" style="display: none;">
+                    <!-- روابط التذاكر التي تم إنشاؤها ستظهر هنا -->
+                </div>
+            </section>
 
-        <section class="report">
-            <h2><i class="fas fa-chart-bar"></i> التقارير</h2>
-            <p>إجمالي عدد المدعوين: <span id="invitedCount">0</span></p>
-            <p>إجمالي عدد الحضور: <span id="attendedCount">0</span></p>
-            <button onclick="fetchReport()"><i class="fas fa-sync-alt"></i> تحديث التقرير</button>
-        </section>
+            <section class="report-section card">
+                <h2><i class="fas fa-chart-pie"></i> تقارير الحضور</h2>
+                <div class="report-summary">
+                    <p>إجمالي عدد الدعوات المرسلة: <strong id="totalInvitedReport">0</strong></p>
+                    <p>إجمالي عدد الحضور الفعلي: <strong id="totalAttendedReport" style="color: #2ecc71;">0</strong></p>
+                    <p>عدد الذين لم يحضروا: <strong id="totalNotAttendedReport" style="color: var(--accent-color);">0</strong></p>
+                </div>
+                <div class="button-group">
+                    <button id="fetchReportButton" class="button-secondary"><i class="fas fa-sync-alt"></i> تحديث التقرير</button>
+                    <button id="printReportButton" class="button-success"><i class="fas fa-print"></i> طباعة التقرير</button>
+                </div>
+
+                <div id="reportDetailsContainer" style="display: none;">
+                    <h3><i class="fas fa-user-check"></i> قائمة الحضور:</h3>
+                    <div class="report-table-container">
+                        <table id="attendedGuestsTable" class="report-table">
+                            <thead><tr><th>الاسم</th><th>وقت الوصول</th><th>معرف التذكرة</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="margin-top: 25px;"><i class="fas fa-user-times"></i> قائمة الذين لم يحضروا:</h3>
+                     <div class="report-table-container">
+                        <table id="notAttendedGuestsTable" class="report-table">
+                            <thead><tr><th>الاسم</th><th>حالة التذكرة</th><th>معرف التذكرة</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="reportLoader" class="container-loader" style="display: none;"><div class="loader"></div></div>
+            </section>
+        </div>
     </div>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuetKY6kocpOaIGGOpOgbUNnkdknirYjj2yTCE6bxv15OqTO8wxcopKbpMBr0sHC1L/exec'; // !!! استبدل هذا !!!
-        let currentQRCodeInstance = null;
-        let currentQRCodeDataForSave = null;
+        // !!! هام جداً: هذا الرابط سيتغير بعد إعادة نشر تطبيق الويب !!!
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyXaVl_IUXMhpuz0ANgfPz2rl9SY5d304x7vlr-yBB1jgHTDTLZt9PBNZ7HKc-5Utaf/exec'; // استبدل هذا بالرابط الجديد بعد النشر
 
-        const qrcodeContainer = document.getElementById('qrcodeContainer');
-        const ticketInfoDiv = document.getElementById('ticketInfo');
-        const saveQrButton = document.getElementById('saveQrButton');
-        const guestNameInput = document.getElementById('guestName');
+        const guestNamesTextarea = document.getElementById('guestNames');
+        const generateBatchButton = document.getElementById('generateBatchButton');
+        const generatedTicketsContainer = document.getElementById('generatedTicketsContainer');
+        const generationStatusDiv = document.getElementById('generationStatus');
+        
+        const totalInvitedReportSpan = document.getElementById('totalInvitedReport');
+        const totalAttendedReportSpan = document.getElementById('totalAttendedReport');
+        const totalNotAttendedReportSpan = document.getElementById('totalNotAttendedReport');
+        const fetchReportButton = document.getElementById('fetchReportButton');
+        const printReportButton = document.getElementById('printReportButton');
+        const reportDetailsContainer = document.getElementById('reportDetailsContainer');
+        const attendedGuestsTableBody = document.getElementById('attendedGuestsTable').getElementsByTagName('tbody')[0];
+        const notAttendedGuestsTableBody = document.getElementById('notAttendedGuestsTable').getElementsByTagName('tbody')[0];
+        const reportLoader = document.getElementById('reportLoader');
 
-        function showLoader(container) {
-            container.innerHTML = '<div class="loader"></div>';
+        function showLoaderInButton(button, show = true, customText = '') {
+            if (show) {
+                button.disabled = true;
+                if (!button.querySelector('.loader')) {
+                    button.dataset.originalText = button.innerHTML;
+                    let loaderHTML = '<div class="loader"></div>';
+                    button.innerHTML = customText ? `${loaderHTML} ${customText}` : loaderHTML;
+                } else {
+                    const loaderElement = button.querySelector('.loader');
+                    button.innerHTML = ''; 
+                    if(loaderElement) button.appendChild(loaderElement);
+                    if(customText) button.append(` ${customText}`);
+                }
+            } else {
+                button.disabled = false;
+                if (button.dataset.originalText) {
+                    button.innerHTML = button.dataset.originalText;
+                }
+            }
         }
 
-        async function generateTicket() {
-            const guestName = guestNameInput.value.trim();
-            showLoader(qrcodeContainer);
-            ticketInfoDiv.style.display = 'none';
-            ticketInfoDiv.innerHTML = '';
-            saveQrButton.style.display = 'none';
-            currentQRCodeDataForSave = null;
+        function displayMessage(element, message, type = 'info') {
+            element.innerHTML = `<div class="message ${type}">${message}</div>`;
+            element.style.display = 'block';
+        }
+
+        generateBatchButton.addEventListener('click', async () => {
+            const namesString = guestNamesTextarea.value.trim();
+            if (!namesString) {
+                displayMessage(generationStatusDiv, "الرجاء إدخال اسم ضيف واحد على الأقل.", 'error');
+                return;
+            }
+             if (WEB_APP_URL === 'YOUR_NEW_WEB_APP_URL_HERE') {
+                alert("يرجى تحديث قيمة WEB_APP_URL في الكود بالرابط الصحيح لتطبيق الويب الخاص بك بعد النشر.");
+                return;
+            }
+
+
+            showLoaderInButton(generateBatchButton, true, 'إنشاء...');
+            generationStatusDiv.style.display = 'none'; 
+            generatedTicketsContainer.innerHTML = ''; 
+            generatedTicketsContainer.style.display = 'none';
 
             const formData = new FormData();
-            formData.append('action', 'generateTicket');
-            formData.append('guestName', guestName);
+            formData.append('action', 'generateTicketsBatch'); // نفس الـ action في Apps Script
+            formData.append('guestNamesList', namesString);
 
             try {
                 const response = await fetch(WEB_APP_URL, { method: 'POST', body: formData });
                 const result = await response.json();
+                showLoaderInButton(generateBatchButton, false);
 
-                if (result.success) {
-                    qrcodeContainer.innerHTML = ''; // Clear loader
-                    if (currentQRCodeInstance) {
-                        currentQRCodeInstance.clear();
-                    }
-                    currentQRCodeInstance = new QRCode(qrcodeContainer, {
-                        text: result.qrCodeData,
-                        width: 200,
-                        height: 200,
-                        colorDark : "#000000",
-                        colorLight : "#ffffff",
-                        correctLevel : QRCode.CorrectLevel.H
+                if (result.success && result.tickets && result.tickets.length > 0) {
+                    displayMessage(generationStatusDiv, `تم إنشاء ${result.count} تذكرة بنجاح! روابط التذاكر أدناه:`, 'success');
+                    generatedTicketsContainer.style.display = 'block';
+                    generatedTicketsContainer.innerHTML = '<h3><i class="fas fa-link"></i> روابط التذاكر التي تم إنشاؤها:</h3>';
+
+                    result.tickets.forEach(ticket => {
+                        // افترض أن ticket.qrCodeData أو ticket.id هو المعرف الفريد للتذكرة
+                        const ticketId = ticket.qrCodeData || ticket.id; 
+                        if (!ticketId) {
+                            console.warn("Ticket ID is missing for guest:", ticket.guestName);
+                            return; // تخطي هذه التذكرة إذا لم يكن هناك معرف
+                        }
+                        const ticketLink = `${WEB_APP_URL}?action=viewTicket&ticketId=${encodeURIComponent(ticketId)}`;
+
+                        const ticketEntryDiv = document.createElement('div');
+                        ticketEntryDiv.className = 'ticket-link-entry';
+                        
+                        const ticketInfoP = document.createElement('p');
+                        ticketInfoP.innerHTML = `<strong>${ticket.guestName || 'ضيف بدون اسم'}:</strong> `;
+                        
+                        const linkAnchor = document.createElement('a');
+                        linkAnchor.href = ticketLink;
+                        linkAnchor.textContent = "رابط التذكرة"; // نص الرابط
+                        linkAnchor.target = "_blank"; // فتح في نافذة جديدة
+                        ticketInfoP.appendChild(linkAnchor);
+                        
+                        const copyButton = document.createElement('button');
+                        copyButton.innerHTML = '<i class="fas fa-copy"></i> نسخ';
+                        copyButton.className = 'button-success copy-link-btn';
+                        copyButton.dataset.link = ticketLink;
+
+                        copyButton.addEventListener('click', function() {
+                           const linkToCopy = this.dataset.link;
+                           navigator.clipboard.writeText(linkToCopy).then(() => {
+                               const originalText = this.innerHTML;
+                               this.innerHTML = '<i class="fas fa-check"></i> تم النسخ';
+                               this.disabled = true;
+                               setTimeout(() => { 
+                                   this.innerHTML = originalText;
+                                   this.disabled = false; 
+                               }, 2500);
+                           }).catch(err => {
+                               console.error('فشل نسخ الرابط: ', err);
+                               alert('فشل نسخ الرابط. يرجى نسخه يدويًا.');
+                           });
+                        });
+                        
+                        ticketEntryDiv.appendChild(ticketInfoP);
+                        ticketEntryDiv.appendChild(copyButton);
+                        generatedTicketsContainer.appendChild(ticketEntryDiv);
                     });
-                    currentQRCodeDataForSave = result.qrCodeData;
-
-                    ticketInfoDiv.innerHTML = `
-                        <p><i class="fas fa-check-circle" style="color: green;"></i> تم إنشاء التذكرة بنجاح!</p>
-                        <p><strong><i class="fas fa-id-card"></i> معرف التذكرة:</strong> ${result.ticketId}</p>
-                        <p><strong><i class="fas fa-user"></i> اسم الضيف:</strong> ${result.guestName}</p>
-                        <p><strong><i class="fas fa-qrcode"></i> بيانات QR:</strong> ${result.qrCodeData}</p>
-                    `;
-                    ticketInfoDiv.style.display = 'block';
-                    saveQrButton.style.display = 'inline-flex';
-                    guestNameInput.value = '';
-                    fetchReport();
+                    
+                    guestNamesTextarea.value = ''; 
+                    fetchDetailedReport(); 
                 } else {
-                    qrcodeContainer.innerHTML = `<p style="color: red;">فشل إنشاء التذكرة: ${result.message || 'خطأ غير معروف'}</p>`;
+                    displayMessage(generationStatusDiv, `فشل إنشاء التذاكر: ${result.message || 'خطأ غير معروف'}`, 'error');
                 }
             } catch (error) {
-                console.error("Error generating ticket:", error);
-                qrcodeContainer.innerHTML = `<p style="color: red;">خطأ في الشبكة أو الخادم: ${error.message}</p>`;
+                showLoaderInButton(generateBatchButton, false);
+                console.error("Error generating batch tickets:", error);
+                displayMessage(generationStatusDiv, `خطأ في الشبكة أو الخادم: ${error.message}`, 'error');
             }
-        }
+        });
 
-        function saveQRCodeImage() {
-            const qrImageElement = qrcodeContainer.querySelector('img');
-            if (qrImageElement && qrImageElement.src) {
-                const link = document.createElement('a');
-                // اسم الملف: إذا كان currentQRCodeDataForSave يحتوي على اسم الضيف، استخدمه، وإلا استخدم جزء من المعرف
-                let filename = `Ticket_QR_${currentQRCodeDataForSave ? currentQRCodeDataForSave.substring(0,8) : Date.now()}.png`;
-                link.download = filename;
-                link.href = qrImageElement.src;
-                document.body.appendChild(link); // Required for Firefox
-                link.click();
-                document.body.removeChild(link);
-            } else {
-                alert("لم يتم إنشاء QR Code بعد أو لا يمكن الوصول إليه للحفظ.");
-            }
-        }
-
-        async function fetchReport() {
-            const invitedCountSpan = document.getElementById('invitedCount');
-            const attendedCountSpan = document.getElementById('attendedCount');
-            invitedCountSpan.textContent = 'جاري...';
-            attendedCountSpan.textContent = 'جاري...';
+        async function fetchDetailedReport() {
+            if (WEB_APP_URL === 'YOUR_NEW_WEB_APP_URL_HERE') return; // لا تحاول جلب التقرير إذا لم يتم تحديث الرابط
+            showLoaderInButton(fetchReportButton, true, 'تحديث...');
+            reportLoader.style.display = 'flex';
+            reportDetailsContainer.style.display = 'none'; 
 
             const formData = new FormData();
-            formData.append('action', 'getReport');
+            formData.append('action', 'getDetailedReport');
 
             try {
                 const response = await fetch(WEB_APP_URL, { method: 'POST', body: formData });
                 const result = await response.json();
+                showLoaderInButton(fetchReportButton, false);
+                reportLoader.style.display = 'none';
 
                 if (result.success) {
-                    invitedCountSpan.textContent = result.invited;
-                    attendedCountSpan.textContent = result.attended;
+                    totalInvitedReportSpan.textContent = result.totalInvited;
+                    totalAttendedReportSpan.textContent = result.attendedCount;
+                    totalNotAttendedReportSpan.textContent = result.notAttendedCount;
+
+                    attendedGuestsTableBody.innerHTML = ''; 
+                    result.attendedGuests.forEach(guest => {
+                        const row = attendedGuestsTableBody.insertRow();
+                        row.insertCell().textContent = guest.name;
+                        row.insertCell().textContent = guest.arrivalTime;
+                        row.insertCell().textContent = guest.qrCode; // هذا هو ticketId
+                    });
+
+                    notAttendedGuestsTableBody.innerHTML = ''; 
+                    result.notAttendedGuests.forEach(guest => {
+                        const row = notAttendedGuestsTableBody.insertRow();
+                        row.insertCell().textContent = guest.name;
+                        row.insertCell().textContent = guest.status === 'Valid' ? 'صالحة (لم يحضر)' : guest.status;
+                        row.insertCell().textContent = guest.qrCode; // هذا هو ticketId
+                    });
+                    reportDetailsContainer.style.display = 'block';
                 } else {
-                    invitedCountSpan.textContent = 'خطأ';
-                    attendedCountSpan.textContent = 'خطأ';
                     alert(`فشل جلب التقرير: ${result.message || 'خطأ غير معروف'}`);
                 }
             } catch (error) {
-                console.error("Error fetching report:", error);
-                invitedCountSpan.textContent = 'خطأ';
-                attendedCountSpan.textContent = 'خطأ';
+                showLoaderInButton(fetchReportButton, false);
+                reportLoader.style.display = 'none';
+                console.error("Error fetching detailed report:", error);
                 alert(`خطأ في الشبكة عند جلب التقرير: ${error.message}`);
             }
         }
-        window.onload = fetchReport; // Fetch report on page load
+
+        printReportButton.addEventListener('click', () => {
+            if (reportDetailsContainer.style.display === 'none') {
+                alert("يرجى تحديث التقرير أولاً لعرض التفاصيل قبل الطباعة.");
+                return;
+            }
+            window.print();
+        });
+        
+        // جلب التقرير عند تحميل الصفحة إذا كان الرابط محدثًا
+        window.onload = () => {
+            if (WEB_APP_URL !== 'YOUR_NEW_WEB_APP_URL_HERE') {
+                fetchDetailedReport();
+            } else {
+                alert("يرجى تحديث قيمة WEB_APP_URL في كود AdminPanel.html بالرابط الصحيح لتطبيق الويب الخاص بك بعد النشر، ثم أعد تحميل الصفحة.");
+            }
+        };
     </script>
 </body>
 </html>
