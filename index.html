@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مسح تذاكر الحفل (jsQR) - مع تحديد</title>
+    <title>مسح تذاكر الحفل (jsQR) - تحديد محسن</title>
 
     <script src="js/jsQR.js"></script> 
 
@@ -32,13 +32,12 @@
             margin-bottom: 25px;
             font-size: 2.2em;
         }
-        /* حاوية الفيديو والرسم */
         #video-wrapper {
-            position: relative; /* لجعل canvas التحديد يتراكب بشكل صحيح */
+            position: relative;
             width: 100%;
-            max-width: 500px; /* أو أي عرض تفضله */
+            max-width: 500px;
             margin-bottom: 20px;
-            background-color: rgba(52, 73, 94, 0.9); /* نفس خلفية qr-reader-container القديمة */
+            background-color: rgba(52, 73, 94, 0.9);
             padding: 10px;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -47,19 +46,17 @@
             width: 100%;
             max-width: 100%;
             height: auto;
-            display: block; /* لإزالة أي مسافة إضافية أسفل الفيديو */
-            border: 3px dashed #3498db; /* حد الكاميرا */
+            display: block;
+            border: 3px dashed #3498db;
         }
-        /* Canvas لرسم مربع التحديد فوق الفيديو */
         #detectionCanvas {
             position: absolute;
-            top: 10px; /* يجب أن يتطابق مع padding حاوية video-wrapper */
-            left: 10px; /* يجب أن يتطابق مع padding حاوية video-wrapper */
-            /* الأبعاد سيتم ضبطها بواسطة JavaScript لتطابق الفيديو */
-            pointer-events: none; /* لجعل النقرات تمر عبره إلى الفيديو إذا لزم الأمر */
+            top: 10px; 
+            left: 10px; 
+            pointer-events: none; 
         }
         #scan-status {
-            margin-top: 10px; /* تم تقليل المسافة لأن الحاوية أصبحت video-wrapper */
+            margin-top: 10px;
             padding: 15px;
             background-color: #34495e;
             border-radius: 8px;
@@ -152,19 +149,18 @@
     </style>
 </head>
 <body>
-    <h1><i class="fas fa-qrcode"></i> مسح تذاكر الدخول (jsQR) - مع تحديد</h1>
+    <h1><i class="fas fa-qrcode"></i> مسح تذاكر الدخول (jsQR) - تحديد محسن</h1>
 
     <div id="video-wrapper">
         <video id="videoElement" playsinline autoplay muted></video>
-        <canvas id="detectionCanvas"></canvas> <!-- Canvas للتحديد فوق الفيديو -->
-        <canvas id="qrAnalysisCanvas" style="display: none;"></canvas> <!-- Canvas لتحليل QR، مخفي -->
+        <canvas id="detectionCanvas"></canvas>
+        <canvas id="qrAnalysisCanvas" style="display: none;"></canvas>
     </div>
     <div id="loadingMessage">جاري تحميل الكاميرا...</div>
     <div id="scan-status" class="status-message">
         انقر على "بدء المسح" لتفعيل الكاميرا.
     </div>
     
-
     <div class="button-group">
         <button id="startScanButton"><i class="fas fa-camera"></i> بدء المسح بالكاميرا</button>
         <button id="stopScanButton" style="display: none;"><i class="fas fa-stop-circle"></i> إيقاف المسح</button>
@@ -186,9 +182,9 @@
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuetKY6kocpOaIGGOpOgbUNnkdknirYjj2yTCE6bxv15OqTO8wxcopKbpMBr0sHC1L/exec';
         
         const video = document.getElementById('videoElement');
-        const qrAnalysisCanvasElement = document.getElementById('qrAnalysisCanvas'); // لتحليل QR
+        const qrAnalysisCanvasElement = document.getElementById('qrAnalysisCanvas');
         const qrAnalysisCanvas = qrAnalysisCanvasElement.getContext('2d');
-        const detectionCanvasElement = document.getElementById('detectionCanvas'); // لرسم التحديد
+        const detectionCanvasElement = document.getElementById('detectionCanvas');
         const detectionCanvas = detectionCanvasElement.getContext('2d');
         
         const scanStatusDiv = document.getElementById('scan-status');
@@ -208,8 +204,9 @@
         let animationFrameId = null;
         let processingQrCode = false; 
         const SCAN_RESTART_DELAY = 1000; 
+        let lastDetectedQrLocation = null; // لتخزين موقع آخر QR Code تم اكتشافه
 
-        function unlockAudio() {
+        function unlockAudio() { /* ... نفس كود فتح الصوت ... */ 
             if (audioUnlocked) return;
             console.log("Attempting to unlock audio...");
             let unlockedCount = 0;
@@ -245,7 +242,7 @@
             }, 500);
         }
 
-        function playSound(soundElement) {
+        function playSound(soundElement) { /* ... نفس كود تشغيل الصوت ... */
             if (!audioUnlocked) {
                 console.warn("Audio not unlocked. Sound may not play.");
             }
@@ -263,6 +260,15 @@
             detectionCanvas.strokeStyle = color;
             detectionCanvas.stroke();
         }
+        
+        function drawQrBox(location, color = "#2ecc71") {
+            if (!location) return;
+            drawLine(location.topLeftCorner, location.topRightCorner, color);
+            drawLine(location.topRightCorner, location.bottomRightCorner, color);
+            drawLine(location.bottomRightCorner, location.bottomLeftCorner, color);
+            drawLine(location.bottomLeftCorner, location.topLeftCorner, color);
+        }
+
 
         function tick() {
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -271,20 +277,18 @@
                 if (qrAnalysisCanvasElement.width !== video.videoWidth || qrAnalysisCanvasElement.height !== video.videoHeight) {
                     qrAnalysisCanvasElement.height = video.videoHeight;
                     qrAnalysisCanvasElement.width = video.videoWidth;
-                    detectionCanvasElement.height = video.videoHeight; // مزامنة أبعاد canvas التحديد
+                    detectionCanvasElement.height = video.videoHeight;
                     detectionCanvasElement.width = video.videoWidth;
                 }
                 
-                // 1. ارسم الفيديو على canvas التحليل (المخفي)
                 qrAnalysisCanvas.drawImage(video, 0, 0, qrAnalysisCanvasElement.width, qrAnalysisCanvasElement.height);
-                
-                // 2. امسح canvas التحديد في كل إطار
                 detectionCanvas.clearRect(0, 0, detectionCanvasElement.width, detectionCanvasElement.height);
 
-                if (!processingQrCode) { // فقط قم بالتحليل إذا لم نكن نعالج رمزًا بالفعل
+                if (!processingQrCode) { 
                     try {
                         const imageData = qrAnalysisCanvas.getImageData(0, 0, qrAnalysisCanvasElement.width, qrAnalysisCanvasElement.height);
                         if (typeof jsQR === 'undefined') {
+                            // ... (معالجة خطأ jsQR غير محمل) ...
                             console.error("jsQR library is not loaded!");
                             scanStatusDiv.textContent = "خطأ: مكتبة مسح QR (jsQR) لم يتم تحميلها.";
                             scanStatusDiv.className = 'status-message error';
@@ -297,17 +301,22 @@
 
                         if (code && code.data) {
                             console.log("Found QR code:", code.data);
-                            // 3. ارسم مربع التحديد على canvas التحديد (المرئي)
-                            drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#2ecc71"); // أخضر
-                            drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#2ecc71");
-                            drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#2ecc71");
-                            drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#2ecc71");
+                            lastDetectedQrLocation = code.location; // تخزين الموقع
+                            drawQrBox(lastDetectedQrLocation); // رسم المربع فورًا
                             
                             processingQrCode = true; 
                             processTicketResult(code.data, 'scan');
+                        } else {
+                            lastDetectedQrLocation = null; // مسح الموقع إذا لم يتم العثور على شيء
                         }
                     } catch (err) {
-                        // console.error("Error during QR decoding:", err); 
+                        // console.warn("Error during QR decoding:", err); 
+                        lastDetectedQrLocation = null;
+                    }
+                } else {
+                    // إذا كنا في حالة المعالجة، استمر في رسم المربع الأخير إذا كان موجودًا
+                    if (lastDetectedQrLocation) {
+                        drawQrBox(lastDetectedQrLocation, "#f39c12"); // رسم بلون مختلف (أصفر مثلاً) أثناء المعالجة
                     }
                 }
             }
@@ -316,7 +325,7 @@
             }
         }
 
-        async function startCamera() {
+        async function startCamera() { /* ... نفس كود بدء الكاميرا مع تعديل بسيط في onloadedmetadata ... */
             unlockAudio(); 
 
             if (typeof jsQR === 'undefined') {
@@ -350,11 +359,17 @@
                 video.srcObject = stream;
                 video.onloadedmetadata = () => { 
                     video.play();
-                    qrAnalysisCanvasElement.height = video.videoHeight; // ضبط canvas التحليل
-                    qrAnalysisCanvasElement.width = video.videoWidth;
-                    detectionCanvasElement.height = video.videoHeight; // ضبط canvas التحديد
-                    detectionCanvasElement.width = video.videoWidth;
-                    console.log(`Camera started with resolution: ${video.videoWidth}x${video.videoHeight}`);
+                    // تأكد من أن أبعاد الفيديو الفعلية تستخدم لضبط الـ canvas
+                    const track = stream.getVideoTracks()[0];
+                    const settings = track.getSettings();
+                    const actualWidth = settings.width || video.videoWidth;
+                    const actualHeight = settings.height || video.videoHeight;
+
+                    qrAnalysisCanvasElement.height = actualHeight;
+                    qrAnalysisCanvasElement.width = actualWidth;
+                    detectionCanvasElement.height = actualHeight;
+                    detectionCanvasElement.width = actualWidth;
+                    console.log(`Camera started with resolution: ${actualWidth}x${actualHeight}`);
 
                     startScanButton.style.display = 'none';
                     stopScanButton.style.display = 'inline-flex';
@@ -376,7 +391,7 @@
             }
         }
 
-        function stopCamera() {
+        function stopCamera() { /* ... نفس كود إيقاف الكاميرا مع إضافة مسح lastDetectedQrLocation ... */
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
@@ -387,7 +402,6 @@
                 video.srcObject = null;
                 console.log("Camera stopped.");
             }
-            // امسح canvas التحديد عند إيقاف الكاميرا
             detectionCanvas.clearRect(0, 0, detectionCanvasElement.width, detectionCanvasElement.height);
             loadingMessage.style.display = 'none';
             scanStatusDiv.textContent = "تم إيقاف المسح. انقر على 'بدء المسح' مرة أخرى.";
@@ -397,12 +411,13 @@
             startScanButton.style.display = 'inline-flex';
             stopScanButton.style.display = 'none';
             processingQrCode = false;
+            lastDetectedQrLocation = null; // مسح الموقع عند إيقاف الكاميرا
         }
 
         startScanButton.addEventListener('click', startCamera);
         stopScanButton.addEventListener('click', stopCamera);
 
-        async function processTicketResult(decodedText, actionType = 'scan') {
+        async function processTicketResult(decodedText, actionType = 'scan') { /* ... نفس كود معالجة النتيجة ... */
             const isManualLookup = actionType === 'lookup';
             const endpointAction = isManualLookup ? 'lookupTicket' : 'scanTicket';
 
@@ -449,6 +464,7 @@
             if (!isManualLookup) {
                 setTimeout(() => {
                     processingQrCode = false; 
+                    lastDetectedQrLocation = null; // امسح الموقع المخزن بعد انتهاء المعالجة والتأخير
                     if (stream && stream.active && !animationFrameId) {
                         console.log("Restarting scan loop after processing (if stopped).");
                         animationFrameId = requestAnimationFrame(tick);
@@ -456,11 +472,14 @@
                         console.log("Scan loop not restarted as camera is off or intended to be off.");
                     }
                 }, SCAN_RESTART_DELAY); 
+            } else {
+                // للبحث اليدوي، تأكد من مسح أي مربع تحديد قديم
+                lastDetectedQrLocation = null;
+                detectionCanvas.clearRect(0, 0, detectionCanvasElement.width, detectionCanvasElement.height);
             }
         }
 
-
-        function toggleTicketLookup() {
+        function toggleTicketLookup() { /* ... نفس كود تبديل البحث اليدوي ... */
             const lookupDiv = document.getElementById('manualTicketLookup');
             const showButton = document.getElementById('showLookupButton');
             if (lookupDiv.style.display === 'none') {
@@ -475,7 +494,7 @@
             }
         }
 
-        async function lookupTicketManually() {
+        async function lookupTicketManually() { /* ... نفس كود البحث اليدوي ... */
             const ticketId = document.getElementById('manualTicketId').value.trim();
             if (!ticketId) {
                 scanStatusDiv.textContent = "الرجاء إدخال معرّف التذكرة أو بيانات QR.";
