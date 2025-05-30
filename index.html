@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مسح تذاكر الحفل (jsQR)</title>
+    <title>مسح تذاكر الحفل (2jsQR) - سريع</title>
 
     <!-- تحميل مكتبة jsQR من ملف محلي داخل مجلد js -->
     <script src="js/jsQR.js"></script> 
@@ -36,7 +36,7 @@
             margin-bottom: 25px;
             font-size: 2.2em;
         }
-        #video-container { /* Changed from qr-reader-container for clarity */
+        #video-container {
             background-color: rgba(52, 73, 94, 0.9);
             padding: 10px;
             border-radius: 10px;
@@ -44,24 +44,24 @@
             width: 100%;
             max-width: 500px;
             margin-bottom: 20px;
-            position: relative; /* For overlaying messages if needed */
+            position: relative;
         }
-        #videoElement { /* This is our video element */
+        #videoElement {
             width: 100%;
-            max-width: 100%; /* Ensure it doesn't overflow container */
-            height: auto;   /* Maintain aspect ratio */
+            max-width: 100%;
+            height: auto;
             border: 3px dashed #3498db;
-            background-color: #1a252f; /* Darker placeholder */
-            display: block; /* Remove extra space below video */
+            background-color: #1a252f;
+            display: block;
         }
-        #scan-status { /* Renamed from qr-reader-results */
+        #scan-status {
             margin-top: 10px;
             padding: 15px;
             background-color: #34495e;
             border-radius: 8px;
             min-height: 70px;
             width: 100%;
-            max-width: 500px; /* Match video container */
+            max-width: 500px;
             box-sizing: border-box;
             font-size: 1.1em;
             line-height: 1.6;
@@ -148,11 +148,10 @@
     </style>
 </head>
 <body>
-    <h1><i class="fas fa-qrcode"></i> مسح تذاكر الدخول (jsQR)</h1>
+    <h1><i class="fas fa-qrcode"></i> مسح تذاكر الدخول (jsQR) - سريع</h1>
 
     <div id="video-container">
         <video id="videoElement" playsinline autoplay muted></video>
-        <!-- Canvas for jsQR, can be hidden -->
         <canvas id="qrCanvas" style="display: none;"></canvas> 
     </div>
     <div id="loadingMessage">جاري تحميل الكاميرا...</div>
@@ -193,64 +192,117 @@
         const errorSound = document.getElementById('errorSound');
         const usedSound = document.getElementById('usedSound');
         const infoSound = document.getElementById('infoSound');
+        
+        // قائمة بجميع عناصر الصوت لتهيئتها عند أول تفاعل
+        const audioElements = [successSound, errorSound, usedSound, infoSound];
+        let audioUnlocked = false; // لتتبع ما إذا تم فتح الصوت
 
         let stream = null;
         let animationFrameId = null;
-        let processingQrCode = false; // Flag to prevent multiple processing of the same QR
+        let processingQrCode = false; 
+        const SCAN_RESTART_DELAY = 1000; // تقليل التأخير إلى ثانية واحدة (1000 مللي ثانية)
+
+        // دالة لفتح الصوت (تستدعى عند أول نقرة)
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            console.log("Attempting to unlock audio...");
+            let unlockedCount = 0;
+            audioElements.forEach(audio => {
+                if (audio && typeof audio.play === 'function') {
+                    // خدعة بسيطة لتشغيل وإيقاف الصوت فورًا لفتح السياق
+                    const promise = audio.play();
+                    if (promise !== undefined) {
+                        promise.then(_ => {
+                            audio.pause();
+                            audio.currentTime = 0; // Reset audio to start
+                            unlockedCount++;
+                            if (unlockedCount === audioElements.length) {
+                                console.log("All audio elements unlocked.");
+                                audioUnlocked = true;
+                            }
+                        }).catch(error => {
+                            console.warn("Error unlocking audio for an element:", error, audio);
+                            // حتى لو فشل واحد، حاول مع البقية
+                            if (unlockedCount + 1 === audioElements.length && unlockedCount > 0) { // إذا كان هذا هو الأخير وفشل، ولكن البعض الآخر نجح
+                                 console.log("Some audio elements unlocked.");
+                                 audioUnlocked = true; // اعتبره مفتوحًا إذا نجح البعض على الأقل
+                            }
+                        });
+                    } else {
+                        // إذا لم يتم إرجاع Promise، فهذا يعني أن المتصفح قديم جدًا أو لا يدعم التشغيل البرمجي
+                        console.warn("Audio play did not return a promise for:", audio);
+                    }
+                }
+            });
+             // كحل احتياطي إذا لم تعمل الـ promises بشكل صحيح أو لم يتم إرجاعها
+            setTimeout(() => {
+                if (!audioUnlocked && unlockedCount > 0) {
+                    console.log("Audio considered unlocked due to some successes (fallback).");
+                    audioUnlocked = true;
+                } else if (!audioUnlocked) {
+                    console.warn("Audio unlock might have failed for all elements.");
+                }
+            }, 500);
+        }
+
 
         function playSound(soundElement) {
+            if (!audioUnlocked) {
+                console.warn("Audio not unlocked. Sound may not play.");
+                // يمكنك محاولة فتح الصوت هنا مرة أخرى، ولكن يفضل أن يكون عند تفاعل المستخدم
+            }
             if (soundElement && typeof soundElement.play === 'function') {
                 soundElement.currentTime = 0;
                 soundElement.play().catch(e => console.warn("Error playing sound:", e));
             }
         }
 
-        // Function to draw video to canvas and try to decode QR
         function tick() {
             if (video.readyState === video.HAVE_ENOUGH_DATA && !processingQrCode) {
                 loadingMessage.style.display = 'none';
-                canvasElement.height = video.videoHeight;
-                canvasElement.width = video.videoWidth;
+                // ضبط أبعاد canvas مرة واحدة عند بدء تشغيل الفيديو أو عند تغيير حجمه
+                if (canvasElement.width !== video.videoWidth || canvasElement.height !== video.videoHeight) {
+                    canvasElement.height = video.videoHeight;
+                    canvasElement.width = video.videoWidth;
+                }
+                
                 canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
                 
                 try {
                     const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                    // Check if jsQR is loaded before using it
                     if (typeof jsQR === 'undefined') {
                         console.error("jsQR library is not loaded!");
                         scanStatusDiv.textContent = "خطأ: مكتبة مسح QR (jsQR) لم يتم تحميلها.";
                         scanStatusDiv.className = 'status-message error';
-                        stopCamera(); // Stop trying if library isn't there
+                        stopCamera();
                         return;
                     }
                     const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "dontInvert", // Or "attemptBoth" if needed
+                        inversionAttempts: "dontInvert",
                     });
 
                     if (code && code.data) {
                         console.log("Found QR code:", code.data);
-                        processingQrCode = true; // Set flag
-                        scanStatusDiv.textContent = `تم العثور على رمز: ${code.data}`;
-                        scanStatusDiv.className = 'status-message info';
+                        processingQrCode = true; 
+                        // لا تحدث scanStatusDiv هنا مباشرة، دع processTicketResult تتولى ذلك
                         processTicketResult(code.data, 'scan');
-                        // stopCamera(); // Optionally stop after first scan
-                        // For continuous scanning, reset processingQrCode after a delay in processTicketResult
                     }
                 } catch (err) {
-                    console.error("Error during QR decoding:", err);
-                    // Don't stop the loop for decoding errors, just log and continue
+                    // console.error("Error during QR decoding:", err); 
+                    // لا داعي لطباعة هذا الخطأ بشكل متكرر إذا لم يتم العثور على QR
                 }
             }
-            if (stream && stream.active) { // Only request next frame if stream is active
+            if (stream && stream.active) { 
                 animationFrameId = requestAnimationFrame(tick);
             }
         }
 
         async function startCamera() {
-            // Check if jsQR is loaded at the very start
+            unlockAudio(); // محاولة فتح الصوت عند النقر على زر البدء
+
             if (typeof jsQR === 'undefined') {
                 console.error("jsQR library is not loaded! Cannot start camera.");
-                scanStatusDiv.textContent = "خطأ حرج: مكتبة مسح QR (jsQR) لم يتم تحميلها. يرجى التحقق من تحميل الملف المحلي.";
+                scanStatusDiv.textContent = "خطأ حرج: مكتبة مسح QR (jsQR) لم يتم تحميلها.";
                 scanStatusDiv.className = 'status-message error';
                 startScanButton.disabled = true;
                 return;
@@ -270,23 +322,29 @@
             try {
                 const constraints = {
                     video: {
-                        facingMode: "environment", // Prioritize rear camera
-                        width: { ideal: 640 }, // Request a reasonable resolution
+                        facingMode: "environment",
+                        width: { ideal: 640 }, 
                         height: { ideal: 480 }
+                        // يمكنك إضافة frameRate إذا أردت: frameRate: { ideal: 15 }
                     }
                 };
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
-                video.setAttribute("playsinline", true); // Required for iOS
-                video.play();
-                
-                startScanButton.style.display = 'none';
-                stopScanButton.style.display = 'inline-flex';
-                stopScanButton.disabled = false;
-                scanStatusDiv.textContent = "الكاميرا مفعلة. وجهها نحو QR Code.";
-                scanStatusDiv.className = 'status-message info';
-                
-                animationFrameId = requestAnimationFrame(tick); // Start scanning loop
+                video.onloadedmetadata = () => { // تأكد من تحميل بيانات الفيديو قبل تشغيل tick
+                    video.play();
+                    // ضبط أبعاد canvas الأولية
+                    canvasElement.height = video.videoHeight;
+                    canvasElement.width = video.videoWidth;
+                    console.log(`Camera started with resolution: ${video.videoWidth}x${video.videoHeight}`);
+
+                    startScanButton.style.display = 'none';
+                    stopScanButton.style.display = 'inline-flex';
+                    stopScanButton.disabled = false;
+                    scanStatusDiv.textContent = "الكاميرا مفعلة. وجهها نحو QR Code.";
+                    scanStatusDiv.className = 'status-message info';
+                    
+                    animationFrameId = requestAnimationFrame(tick); 
+                };
             } catch (err) {
                 console.error("Error accessing camera:", err);
                 loadingMessage.style.display = 'none';
@@ -307,7 +365,7 @@
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
-                video.srcObject = null; // Clear video source
+                video.srcObject = null;
                 console.log("Camera stopped.");
             }
             loadingMessage.style.display = 'none';
@@ -317,7 +375,7 @@
             startScanButton.disabled = false;
             startScanButton.style.display = 'inline-flex';
             stopScanButton.style.display = 'none';
-            processingQrCode = false; // Reset flag
+            processingQrCode = false;
         }
 
         startScanButton.addEventListener('click', startCamera);
@@ -326,12 +384,6 @@
         async function processTicketResult(decodedText, actionType = 'scan') {
             const isManualLookup = actionType === 'lookup';
             const endpointAction = isManualLookup ? 'lookupTicket' : 'scanTicket';
-
-            if (!isManualLookup && stream && stream.active) {
-                // Temporarily pause scanning by not requesting new frames
-                // The tick function checks for processingQrCode
-            }
-
 
             scanStatusDiv.innerHTML = `جاري التحقق: <strong>${decodedText}</strong>...`;
             scanStatusDiv.className = 'status-message';
@@ -373,19 +425,16 @@
                 playSound(errorSound);
             }
 
-            // For continuous scanning with jsQR, reset flag after a delay
-            // If you want to stop after one scan, call stopCamera() here or earlier
             if (!isManualLookup) {
                 setTimeout(() => {
                     processingQrCode = false; 
                     if (stream && stream.active && !animationFrameId) {
-                        // If stream is still meant to be active but loop stopped, restart it
-                        console.log("Restarting scan loop after processing.");
+                        console.log("Restarting scan loop after processing (if stopped).");
                         animationFrameId = requestAnimationFrame(tick);
                     } else if (!stream || !stream.active) {
-                        console.log("Scan loop not restarted as camera is off.");
+                        console.log("Scan loop not restarted as camera is off or intended to be off.");
                     }
-                }, 3000); // 3 seconds delay before allowing another scan
+                }, SCAN_RESTART_DELAY); 
             }
         }
 
@@ -396,7 +445,7 @@
             if (lookupDiv.style.display === 'none') {
                 lookupDiv.style.display = 'block';
                 showButton.innerHTML = '<i class="fas fa-times-circle"></i> إغلاق البحث اليدوي';
-                if (stream && stream.active) { // If camera is running
+                if (stream && stream.active) { 
                     stopCamera(); 
                 }
             } else {
@@ -410,7 +459,7 @@
             if (!ticketId) {
                 scanStatusDiv.textContent = "الرجاء إدخال معرّف التذكرة أو بيانات QR.";
                 scanStatusDiv.className = 'status-message warning';
-                playSound(errorSound);
+                playSound(errorSound); // الصوت هنا قد يعمل لأنه بعد تفاعل محتمل مع حقل الإدخال
                 return;
             }
             if (stream && stream.active) {
@@ -419,7 +468,6 @@
             processTicketResult(ticketId, 'lookup');
         }
         
-        // Initial state
         scanStatusDiv.textContent = "انقر على 'بدء المسح' لتفعيل الكاميرا.";
 
     </script>
