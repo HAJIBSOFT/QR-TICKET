@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة تحكم المدير - تذاكر الحفل</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -137,7 +136,7 @@
             justify-content: center;
         }
         button:last-child { margin-right: 0; }
-        button i { margin-left: 8px; }
+        button i { margin-left: 8px; } 
         button:hover { background-color: #2980b9; }
         button:active { transform: translateY(1px); }
         button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
@@ -152,14 +151,14 @@
 
         #generatedTicketsContainer {
             margin-top: 20px;
-            max-height: 400px; /* Or adjust as needed */
+            max-height: 400px;
             overflow-y: auto;
             border: 1px solid var(--medium-gray);
             border-radius: var(--border-radius);
             padding: 10px;
         }
         .ticket-card {
-            background-color: var(--card-bg); /* استخدام متغير الخلفية */
+            background-color: var(--card-bg);
             border: 1px solid #eee;
             border-radius: var(--border-radius);
             padding: 15px;
@@ -171,8 +170,8 @@
             display: inline-block; 
             border: 2px solid var(--primary-color);
             padding: 5px;
-            background-color: white; /* خلفية بيضاء للـ QR لضمان الوضوح */
-            min-width: 138px; /* (128px QR + 5px padding * 2) to prevent collapse before render */
+            background-color: white;
+            min-width: 138px; 
             min-height: 138px;
         }
         .ticket-card .qr-code img,
@@ -193,11 +192,12 @@
             margin-top: 8px;
             font-style: italic;
         }
-        .save-ticket-btn {
+        .ticket-action-buttons button {
             margin-top: 10px !important; 
-            width: calc(100% - 20px); 
+            width: calc(50% - 15px);
             box-sizing: border-box;
         }
+
 
         .report-section { margin-top: 20px; }
         .report-summary p {
@@ -270,8 +270,9 @@
             header h1 { font-size: 1.8em; }
             .card h2 { font-size: 1.3em; }
             button { font-size: 0.9em; padding: 10px 15px;}
-            .save-ticket-btn {
+            .ticket-action-buttons button {
                 width: 100%;
+                margin-right: 0; 
             }
         }
         @media print {
@@ -288,7 +289,7 @@
                 max-width: 100%;
             }
             header { display: none; } 
-            .button-group, #ticket-generation #generateBatchButton, #fetchReportButton, #printReportButton:not(.no-print), .save-ticket-btn, .no-print-during-capture { 
+            .button-group, #ticket-generation #generateBatchButton, #fetchReportButton, #printReportButton:not(.no-print), .ticket-action-buttons { 
                 display: none !important; 
             }
             .report-section { margin-top: 0; }
@@ -319,6 +320,9 @@
             <section id="ticket-generation" class="card">
                 <h2><i class="fas fa-ticket-alt"></i> إنشاء تذاكر</h2>
                 
+                <label for="eventTitleInput">اسم الحدث/المناسبة (سيظهر في رابط التذكرة):</label>
+                <input type="text" id="eventTitleInput" placeholder="مثال: حفل زفاف عبدالله وفاطمة">
+
                 <label for="guestNames">أسماء الضيوف (كل اسم في سطر جديد):</label>
                 <textarea id="guestNames" placeholder="مثال:
 عبدالله خالد
@@ -382,8 +386,17 @@
     </div>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwCGCgGcfA8rXQR-D315RgiM6ZF3dPOS0N_H_Ef1EzoDVQba0WLRPv8EBuB_MK5Hvc/exec'; 
-        
+        // --- إعدادات مهمة ---
+        // 1. ضع هنا رابط النشر "لتطبيق الويب" من Google Apps Script
+        // هذا الرابط سيستخدم لإرسال الطلبات (إنشاء تذاكر، جلب تقارير)
+        const GOOGLE_SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbzyn0zHJWsulERf6p6Cmm7U7JyqVPhvC-dCfdLM-7wckPqNDn2AzTexvJXbu1UUVdem/exec'; // <<<<< عدّل هذا الرابط
+
+        // 2. ضع هنا الرابط الكامل لملف PublicTicketView.html المستضاف على GitHub Pages أو استضافتك الخاصة
+        const PUBLIC_TICKET_VIEW_BASE_URL = 'https://hajibsoft.github.io/QR-TICKET/PublicTicketView.html'; // <<<<< عدّل هذا الرابط إذا لزم الأمر
+        // --- نهاية إعدادات مهمة ---
+
+
+        const eventTitleInput = document.getElementById('eventTitleInput');
         const guestNamesTextarea = document.getElementById('guestNames');
         const generateBatchButton = document.getElementById('generateBatchButton');
         const generatedTicketsContainer = document.getElementById('generatedTicketsContainer');
@@ -425,7 +438,25 @@
             element.style.display = 'block';
         }
 
+        function validateConfig() {
+            if (GOOGLE_SCRIPT_API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL' || !GOOGLE_SCRIPT_API_URL.startsWith('https://script.google.com/')) {
+                displayMessage(generationStatusDiv, "خطأ في الإعداد: يرجى تعديل رابط GOOGLE_SCRIPT_API_URL في كود index.html ليشير إلى رابط تطبيق الويب المنشور من Google Apps Script.", 'error');
+                generateBatchButton.disabled = true;
+                fetchReportButton.disabled = true;
+                return false;
+            }
+            if (PUBLIC_TICKET_VIEW_BASE_URL === 'YOUR_PUBLIC_TICKET_VIEW_URL_ON_GITHUB_OR_ELSEWHERE' || !PUBLIC_TICKET_VIEW_BASE_URL.startsWith('http')) {
+                 displayMessage(generationStatusDiv, "خطأ في الإعداد: يرجى تعديل رابط PUBLIC_TICKET_VIEW_BASE_URL في كود index.html ليشير إلى رابط صفحة عرض التذكرة (PublicTicketView.html).", 'error');
+                generateBatchButton.disabled = true; // يمكنك تعطيل الأزرار إذا كان هذا الرابط مهمًا للعملية
+                return false;
+            }
+            return true;
+        }
+
+
         generateBatchButton.addEventListener('click', async () => {
+            if (!validateConfig()) return;
+
             const namesString = guestNamesTextarea.value.trim();
             if (!namesString) {
                 displayMessage(generationStatusDiv, "الرجاء إدخال اسم ضيف واحد على الأقل.", 'error');
@@ -442,7 +473,7 @@
             formData.append('guestNamesList', namesString);
 
             try {
-                const response = await fetch(WEB_APP_URL, { method: 'POST', body: formData });
+                const response = await fetch(GOOGLE_SCRIPT_API_URL, { method: 'POST', body: formData });
                 const result = await response.json();
                 
                 if (result.success && result.tickets && result.tickets.length > 0) {
@@ -455,10 +486,10 @@
                         
                         const qrDiv = document.createElement('div');
                         qrDiv.className = 'qr-code';
-                        ticketCard.appendChild(qrDiv); // أضف qrDiv إلى DOM قبل إنشاء QRCode
+                        ticketCard.appendChild(qrDiv);
                         
                         new QRCode(qrDiv, {
-                            text: ticket.qrCodeData,
+                            text: ticket.qrCodeData, // هذا هو معرف التذكرة (UUID)
                             width: 128,
                             height: 128,
                             colorDark : "#000000",
@@ -470,73 +501,50 @@
                         infoDiv.className = 'ticket-card-info';
                         infoDiv.innerHTML = `
                             <p><strong>الاسم:</strong> ${ticket.guestName}</p>
-                            <p><strong>معرف QR:</strong> ${ticket.qrCodeData}</p>
+                            <p><strong>معرف QR (للمسح):</strong> ${ticket.qrCodeData}</p>
                             <p class="ticket-note"><i class="fas fa-info-circle"></i> هذه التذكرة خاصة بك وصالحة لدخول شخص واحد فقط.</p>
                         `;
                         ticketCard.appendChild(infoDiv);
 
-                        const saveButton = document.createElement('button');
-                        saveButton.innerHTML = '<i class="fas fa-download"></i> حفظ كصورة';
-                        saveButton.className = 'button-success save-ticket-btn no-print-during-capture'; 
-                        
-                        saveButton.addEventListener('click', () => {
-                            showLoaderInButton(saveButton, true, 'حفظ...');
-                            saveButton.style.display = 'none'; 
+                        const buttonsContainer = document.createElement('div'); 
+                        buttonsContainer.className = 'ticket-action-buttons';
 
-                            // دالة للتحقق من جاهزية الـ QR
-                            const waitForQRCodeReady = (callback, attempts = 0) => {
-                                const maxAttempts = 20; // حوالي 4 ثواني كحد أقصى (20 * 200ms)
-                                const qrElement = qrDiv.querySelector('canvas, img');
-                                
-                                // تحقق أن العنصر موجود، وأنه مرئي وله أبعاد فعلية
-                                if (qrElement && (qrElement.width > 0 || qrElement.naturalWidth > 0) && qrElement.offsetHeight > 0) {
-                                    console.log("QR Code element is ready (has dimensions).");
-                                    // تأخير إضافي صغير جدًا بعد التأكد من الأبعاد، لضمان اكتمال الرسم الفعلي
-                                    setTimeout(callback, 50); 
-                                } else if (attempts < maxAttempts) {
-                                    console.log(`Waiting for QR Code to render... Attempt: ${attempts + 1}`);
-                                    setTimeout(() => waitForQRCodeReady(callback, attempts + 1), 200); 
-                                } else {
-                                    console.error("QR Code did not render in time or is not visible.");
-                                    alert("لم يتمكن من تحميل الباركود بشكل صحيح للصورة. حاول مرة أخرى.");
-                                    callback(true); // استدعاء الـ callback مع إشارة خطأ
-                                }
-                            };
+                        const eventName = eventTitleInput.value.trim() || "دعوة خاصة"; 
+                        // الرابط الآن يشير إلى صفحة PublicTicketView.html على GitHub مع المعلمات
+                        const ticketViewUrl = `${PUBLIC_TICKET_VIEW_BASE_URL}?qrData=${encodeURIComponent(ticket.qrCodeData)}&eventName=${encodeURIComponent(eventName)}`;
 
-                            waitForQRCodeReady((errorOccurred) => {
-                                if (errorOccurred) {
-                                    saveButton.style.display = 'inline-flex';
-                                    showLoaderInButton(saveButton, false);
-                                    return; // لا تكمل عملية الالتقاط إذا فشل تحميل الباركود
-                                }
+                        const openLinkButton = document.createElement('button');
+                        openLinkButton.innerHTML = '<i class="fas fa-external-link-alt"></i> فتح رابط التذكرة';
+                        openLinkButton.className = 'button-primary'; 
+                        openLinkButton.title = "فتح رابط التذكرة في صفحة جديدة";
+                        openLinkButton.addEventListener('click', () => {
+                            window.open(ticketViewUrl, '_blank');
+                        });
+                        buttonsContainer.appendChild(openLinkButton);
 
-                                html2canvas(ticketCard, { 
-                                    scale: 2.5, 
-                                    useCORS: true, 
-                                    logging: false, 
-                                    backgroundColor: getComputedStyle(ticketCard).backgroundColor || '#ffffff',
-                                    allowTaint: true,
-                                    removeContainer: false, // أضفت هذا الخيار
-                                    // windowWidth: ticketCard.scrollWidth, // جرب هذه إذا لزم الأمر
-                                    // windowHeight: ticketCard.scrollHeight,
-                                }).then(canvas => {
-                                    const link = document.createElement('a');
-                                    // تحسين اسم الملف ليشمل الأحرف العربية
-                                    const guestNameSanitized = ticket.guestName.replace(/[^\w\sأ-يÀ-ÖØ-öø-ÿ]/gi, '').replace(/\s+/g, '_');
-                                    const fileName = `تذكرة_${guestNameSanitized}_${ticket.qrCodeData}.png`;
-                                    link.download = fileName;
-                                    link.href = canvas.toDataURL('image/png');
-                                    link.click();
-                                }).catch(err => {
-                                    console.error("خطأ في حفظ التذكرة كصورة:", err);
-                                    alert("حدث خطأ أثناء محاولة حفظ التذكرة كصورة.");
-                                }).finally(() => {
-                                    saveButton.style.display = 'inline-flex'; 
-                                    showLoaderInButton(saveButton, false);
-                                });
+                        const copyLinkButton = document.createElement('button');
+                        copyLinkButton.innerHTML = '<i class="fas fa-copy"></i> نسخ رابط التذكرة';
+                        copyLinkButton.className = 'button-secondary';
+                        copyLinkButton.title = "نسخ رابط التذكرة إلى الحافظة";
+                        copyLinkButton.style.marginRight = '10px'; 
+                        copyLinkButton.addEventListener('click', () => {
+                            navigator.clipboard.writeText(ticketViewUrl).then(() => {
+                                const originalText = copyLinkButton.innerHTML;
+                                copyLinkButton.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
+                                copyLinkButton.disabled = true;
+                                setTimeout(() => {
+                                    copyLinkButton.innerHTML = originalText;
+                                    copyLinkButton.disabled = false;
+                                }, 2000);
+                            }).catch(err => {
+                                console.error('فشل نسخ الرابط: ', err);
+                                alert('فشل نسخ الرابط. حاول مرة أخرى أو انسخه يدويًا.');
+                                prompt("الرابط لنسخه يدويًا:", ticketViewUrl);
                             });
                         });
-                        ticketCard.appendChild(saveButton);
+                        buttonsContainer.appendChild(copyLinkButton);
+                        
+                        ticketCard.appendChild(buttonsContainer);
                         generatedTicketsContainer.appendChild(ticketCard);
                     });
                     guestNamesTextarea.value = ''; 
@@ -546,13 +554,15 @@
                 }
             } catch (error) {
                 console.error("Error generating batch tickets:", error);
-                displayMessage(generationStatusDiv, `خطأ في الشبكة أو الخادم: ${error.message}`, 'error');
+                displayMessage(generationStatusDiv, `خطأ في الشبكة أو الخادم عند إنشاء التذاكر: ${error.message}. تأكد من أن رابط GOOGLE_SCRIPT_API_URL صحيح وأن السكربت منشور بشكل صحيح.`, 'error');
             } finally {
                 showLoaderInButton(generateBatchButton, false);
             }
         });
 
         async function fetchDetailedReport() {
+            if (!validateConfig()) return;
+
             showLoaderInButton(fetchReportButton, true, 'تحديث...');
             reportLoader.style.display = 'flex';
             reportDetailsContainer.style.display = 'none'; 
@@ -561,7 +571,7 @@
             formData.append('action', 'getDetailedReport');
 
             try {
-                const response = await fetch(WEB_APP_URL, { method: 'POST', body: formData });
+                const response = await fetch(GOOGLE_SCRIPT_API_URL, { method: 'POST', body: formData });
                 const result = await response.json();
                 reportLoader.style.display = 'none';
 
@@ -592,7 +602,7 @@
             } catch (error) {
                 reportLoader.style.display = 'none';
                 console.error("Error fetching detailed report:", error);
-                alert(`خطأ في الشبكة عند جلب التقرير: ${error.message}`);
+                alert(`خطأ في الشبكة عند جلب التقرير: ${error.message}. تأكد من أن رابط GOOGLE_SCRIPT_API_URL صحيح.`);
             } finally {
                 showLoaderInButton(fetchReportButton, false);
             }
@@ -606,7 +616,12 @@
             window.print();
         });
         
-        window.onload = fetchDetailedReport;
+        // عند تحميل الصفحة، تحقق من الإعدادات وقم بجلب التقرير الأولي
+        window.onload = () => {
+            if (validateConfig()) {
+                fetchDetailedReport();
+            }
+        };
     </script>
 </body>
 </html>
