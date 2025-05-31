@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تذكرة دعوة لـ: <?= guestName ?></title>
+    <title>تذكرة دعوة</title> <!-- سيتم تحديثه لاحقًا -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,11 +39,18 @@
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
             max-width: 450px;
             width: 95%;
-            border-top: 7px solid var(--primary-color); /* Default, will be overridden by status */
+            border-top: 7px solid var(--primary-color); 
             position: relative;
             overflow: hidden;
+            opacity: 0; /* Start hidden, fade in */
+            transform: translateY(20px); /* Start slightly down */
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
         }
-        .ticket-wrapper::before { /* Decorative element */
+        .ticket-wrapper.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .ticket-wrapper::before { 
             content: '';
             position: absolute;
             top: -50px;
@@ -55,7 +62,7 @@
             z-index: 0;
         }
         .ticket-content {
-            position: relative; /* To stay above ::before */
+            position: relative; 
             z-index: 1;
         }
         .event-title {
@@ -78,19 +85,29 @@
             border-bottom: 1px dashed #eee;
             padding-bottom: 15px;
         }
-        #qrcodeDisplay { /* Changed ID for clarity */
+        #qrcodeDisplay { 
             margin: 20px auto;
-            display: inline-block; /* Allows centering with text-align */
+            display: inline-block; 
             border: 4px solid #eee;
             padding: 8px;
-            background-color: white; /* Ensure QR background is white */
+            background-color: white; 
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-            min-width: 150px; /* Prevent collapse before render */
+            min-width: 150px; 
             min-height: 150px;
+        }
+        #qrcodeDisplay.loading-placeholder::after {
+            content: 'جاري تحميل QR...';
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            color: #999;
+            font-size: 0.9em;
         }
         #qrcodeDisplay img, 
         #qrcodeDisplay canvas {
-            display: block; /* Remove extra space below canvas/img */
+            display: block; 
         }
         .qr-code-id {
             font-size: 0.9em;
@@ -105,6 +122,10 @@
             font-size: 1.15em;
             font-weight: 700;
             color: white;
+            min-height: 2.5em; /* To prevent layout jump */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .status-valid { background-color: var(--success-color); }
         .ticket-wrapper.status-valid { border-top-color: var(--success-color); }
@@ -126,40 +147,56 @@
             font-size: 0.85em;
             color: #aaa;
         }
+        .loading-message, .error-message {
+            font-size: 1.2em;
+            color: var(--secondary-color);
+            padding: 20px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        .error-message {
+            color: var(--danger-color);
+        }
 
         @media print {
             body { background-color: white; margin: 0; padding: 10px; }
             .ticket-wrapper { 
                 box-shadow: none; 
-                border: 2px solid #ccc !important; /* Ensure border prints */
+                border: 2px solid #ccc !important; 
                 margin: 0 auto; 
                 max-width: 100%; 
                 width: 100%;
-                border-top-width: 5px !important; /* ensure top border prints */
+                border-top-width: 5px !important; 
+                opacity: 1 !important;
+                transform: none !important;
             }
             .ticket-wrapper::before { display: none; }
-            .footer-text { display: none; }
-            .status-banner { /* Ensure colors print, might need -webkit-print-color-adjust: exact; */
+            .footer-text, .loading-message, .error-message { display: none; }
+            .status-banner { 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact;
-                border: 1px solid #ccc; /* Add border for print if background doesn't show */
+                border: 1px solid #ccc; 
             }
         }
     </style>
 </head>
 <body>
-    <div id="ticketCardElement" class="ticket-wrapper">
+    <div id="loadingIndicator" class="loading-message">جاري تحميل بيانات التذكرة...</div>
+    <div id="errorIndicator" class="error-message" style="display: none;"></div>
+
+    <div id="ticketCardElement" class="ticket-wrapper" style="display: none;"> <!-- Start hidden -->
         <div class="ticket-content">
-            <h1 class="event-title"><?= eventName ?></h1>
+            <h1 class="event-title" id="eventTitleElement"></h1>
             
             <p class="guest-name-label">تذكرة دعوة بإسم:</p>
-            <h2 class="guest-name"><?= guestName ?></h2>
+            <h2 class="guest-name" id="guestNameElement"></h2>
 
-            <div id="qrcodeDisplay"></div>
-            <p class="qr-code-id"><strong>معرف التذكرة:</strong> <?= qrData ?></p>
+            <div id="qrcodeDisplay" class="loading-placeholder"></div> <!-- Placeholder for QR -->
+            <p class="qr-code-id"><strong>معرف التذكرة:</strong> <span id="qrDataElement"></span></p>
 
             <div id="statusMessageContainer" class="status-banner">
-                <!-- سيتم تعبئة رسالة الحالة هنا بواسطة JavaScript -->
+                جاري التحقق من الصلاحية...
             </div>
 
             <p class="instructions">
@@ -174,72 +211,150 @@
     </div>
 
     <script>
-        var qrCodeValue = "<?= qrData ?>";
-        var ticketStatus = "<?= ticketStatus ?>"; // القيم المحتملة: 'Valid', 'Used', 'Attended', 'Invalid', 'Not Found', 'غير موجودة', 'صالحة', 'مستخدمة', 'تم الحضور'
-        var guestName = "<?= guestName ?>";
-        var eventName = "<?= eventName ?>";
+        // --- ضع هنا رابط النشر لتطبيق Google Apps Script الخاص بك ---
+        // مثال: const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/ABCDEFG123456/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzyn0zHJWsulERf6p6Cmm7U7JyqVPhvC-dCfdLM-7wckPqNDn2AzTexvJXbu1UUVdem/exec'; // <<<<< عدّل هذا الرابط
 
-        // 1. إنشاء رمز QR
-        if (qrCodeValue && qrCodeValue !== "NO_QR_DATA_PLACEHOLDER" && qrCodeValue !== "undefined") {
-            try {
-                new QRCode(document.getElementById("qrcodeDisplay"), {
-                    text: qrCodeValue,
-                    width: 180, 
-                    height: 180,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-            } catch (e) {
-                document.getElementById("qrcodeDisplay").innerHTML = "<p style='color:red;'>خطأ في إنشاء QR Code.</p>";
-                console.error("QR Code generation error:", e);
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const errorIndicator = document.getElementById('errorIndicator');
+            const ticketCardElement = document.getElementById('ticketCardElement');
+
+            const eventTitleElem = document.getElementById('eventTitleElement');
+            const guestNameElem = document.getElementById('guestNameElement');
+            const qrDataElem = document.getElementById('qrDataElement');
+            const qrcodeDisplayElem = document.getElementById('qrcodeDisplay');
+            const statusContainer = document.getElementById('statusMessageContainer');
+            
+            // استخلاص المعلمات من رابط الصفحة الحالي
+            const urlParams = new URLSearchParams(window.location.search);
+            const qrDataParam = urlParams.get('qrData');
+            const eventNameParam = urlParams.get('eventName') || "دعوة خاصة"; // قيمة افتراضية إذا لم يتم تمريرها
+
+            if (!qrDataParam) {
+                showError("خطأ: معرف التذكرة (qrData) مفقود من الرابط.");
+                return;
             }
-        } else {
-            document.getElementById("qrcodeDisplay").innerHTML = "<p style='color:red;'>بيانات QR Code غير متوفرة.</p>";
-        }
+            
+            if (GOOGLE_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbzyn0zHJWsulERf6p6Cmm7U7JyqVPhvC-dCfdLM-7wckPqNDn2AzTexvJXbu1UUVdem/exec') {
+                showError("خطأ في الإعداد: يرجى تعديل رابط GOOGLE_SCRIPT_URL في كود PublicTicketView.html.");
+                return;
+            }
 
-        // 2. عرض رسالة الحالة وتلوين الشريط العلوي
-        var statusContainer = document.getElementById('statusMessageContainer');
-        var ticketCard = document.getElementById('ticketCardElement');
-        var statusText = "";
-        var statusClass = ""; // for banner background
-        var cardBorderClass = ""; // for ticket top border
+            // بناء رابط طلب البيانات من Google Apps Script
+            const fetchUrl = `${GOOGLE_SCRIPT_URL}?action=getTicketData&qrData=${encodeURIComponent(qrDataParam)}&eventName=${encodeURIComponent(eventNameParam)}`;
 
-        switch (ticketStatus.toLowerCase().trim()) {
-            case 'valid':
-            case 'صالحة':
-                statusText = "✅ التذكرة صالحة للاستخدام";
-                statusClass = "status-valid";
-                cardBorderClass = "status-valid";
-                break;
-            case 'used':
-            case 'attended':
-            case 'مستخدمة':
-            case 'تم الحضور':
-                statusText = "⚠️ تم استخدام هذه التذكرة مسبقاً";
-                statusClass = "status-used";
-                cardBorderClass = "status-used";
-                break;
-            case 'invalid':
-            case 'غير صالحة':
-                statusText = "❌ هذه التذكرة غير صالحة";
-                statusClass = "status-invalid";
-                cardBorderClass = "status-invalid";
-                break;
-            case 'not found':
-            case 'غير موجودة':
-            default: // يعامل أي حالة غير معروفة كأنها غير موجودة
-                statusText = "🚫 لم يتم العثور على بيانات لهذه التذكرة";
-                statusClass = "status-not-found";
-                cardBorderClass = "status-not-found";
-                if (guestName === "ضيف غير معروف" || guestName === "اسم غير محدد") {
-                     document.querySelector('.guest-name').textContent = "تذكرة غير معروفة";
+            fetch(fetchUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`فشل الاتصال بالخادم: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    loadingIndicator.style.display = 'none';
+                    if (data.success) {
+                        document.title = `تذكرة لـ: ${data.guestName}`;
+                        eventTitleElem.textContent = data.eventName;
+                        guestNameElem.textContent = data.guestName;
+                        qrDataElem.textContent = data.qrData;
+
+                        // إنشاء QR Code
+                        qrcodeDisplayElem.innerHTML = ''; // Clear placeholder/previous QR
+                        qrcodeDisplayElem.classList.remove('loading-placeholder');
+                        try {
+                            new QRCode(qrcodeDisplayElem, {
+                                text: data.qrData,
+                                width: 180,
+                                height: 180,
+                                colorDark: "#000000",
+                                colorLight: "#ffffff",
+                                correctLevel: QRCode.CorrectLevel.H
+                            });
+                        } catch (e) {
+                            qrcodeDisplayElem.innerHTML = "<p style='color:red;'>خطأ في إنشاء QR Code.</p>";
+                            console.error("QR Code generation error:", e);
+                        }
+                        
+                        // عرض حالة الصلاحية
+                        updateStatusDisplay(data.ticketStatus, data.guestName);
+                        ticketCardElement.style.display = 'block';
+                        setTimeout(() => ticketCardElement.classList.add('loaded'), 50); // For fade-in effect
+
+                    } else {
+                        // إذا لم تكن التذكرة ناجحة ولكن تم العثور عليها (مثل "غير موجودة")
+                        if(data.message && data.qrData) {
+                            document.title = `تذكرة غير موجودة`;
+                            eventTitleElem.textContent = data.eventName || "دعوة"; // Display event name if available
+                            guestNameElem.textContent = data.guestName || "---";
+                            qrDataElem.textContent = data.qrData;
+                            qrcodeDisplayElem.innerHTML = "<p style='color:orange;'>لا يمكن عرض QR لهذه التذكرة.</p>";
+                            qrcodeDisplayElem.classList.remove('loading-placeholder');
+                            updateStatusDisplay(data.ticketStatus || 'not found', data.guestName || '---');
+                            ticketCardElement.style.display = 'block';
+                            setTimeout(() => ticketCardElement.classList.add('loaded'), 50);
+                        } else {
+                            showError(`فشل في جلب بيانات التذكرة: ${data.message || 'خطأ غير معروف من الخادم.'}`);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching ticket data:', error);
+                    showError(`حدث خطأ أثناء جلب بيانات التذكرة: ${error.message}. تأكد من اتصالك بالإنترنت وأن رابط السكربت صحيح.`);
+                });
+
+            function updateStatusDisplay(ticketStatus, guestNameForStatus) {
+                var statusText = "";
+                var statusClass = ""; 
+                var cardBorderClass = "";
+
+                switch (ticketStatus.toLowerCase().trim()) {
+                    case 'valid':
+                    case 'صالحة':
+                        statusText = "✅ التذكرة صالحة للاستخدام";
+                        statusClass = "status-valid";
+                        cardBorderClass = "status-valid";
+                        break;
+                    case 'used':
+                    case 'attended':
+                    case 'مستخدمة':
+                    case 'تم الحضور':
+                        statusText = "⚠️ تم استخدام هذه التذكرة مسبقاً";
+                        statusClass = "status-used";
+                        cardBorderClass = "status-used";
+                        break;
+                    case 'invalid':
+                    case 'غير صالحة':
+                        statusText = "❌ هذه التذكرة غير صالحة";
+                        statusClass = "status-invalid";
+                        cardBorderClass = "status-invalid";
+                        break;
+                    case 'not found':
+                    case 'غير موجودة':
+                    default: 
+                        statusText = "🚫 لم يتم العثور على بيانات لهذه التذكرة";
+                        statusClass = "status-not-found";
+                        cardBorderClass = "status-not-found";
+                        if (guestNameForStatus === "ضيف غير معروف" || guestNameForStatus === "اسم غير محدد" || guestNameForStatus === "---") {
+                            guestNameElem.textContent = "تذكرة غير معروفة";
+                        }
+                        break;
                 }
-                break;
-        }
-        statusContainer.textContent = statusText;
-        statusContainer.className = 'status-banner ' + statusClass; // Set class for banner background
-        ticketCard.classList.add(cardBorderClass); // Add class to change top border color
+                statusContainer.textContent = statusText;
+                statusContainer.className = 'status-banner ' + statusClass; 
+                
+                // Remove previous status classes from ticketCard before adding new one
+                ticketCardElement.classList.remove('status-valid', 'status-used', 'status-invalid', 'status-not-found');
+                ticketCardElement.classList.add(cardBorderClass);
+            }
+
+            function showError(message) {
+                loadingIndicator.style.display = 'none';
+                ticketCardElement.style.display = 'none';
+                errorIndicator.textContent = message;
+                errorIndicator.style.display = 'block';
+            }
+        });
     </script>
 </body>
 </html>
