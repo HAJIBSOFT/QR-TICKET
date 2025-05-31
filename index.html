@@ -18,34 +18,33 @@
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
-            background-color: #2c3e50; /* خلفية أغمق قليلاً */
+            background-color: #2c3e50;
             color: #ecf0f1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* البدء من الأعلى */
+            justify-content: flex-start;
             min-height: 100vh;
             text-align: center;
         }
 
         .container {
             width: 100%;
-            max-width: 600px; /* زيادة العرض الأقصى قليلاً */
+            max-width: 600px;
         }
 
         h1 {
             color: #3498db;
             margin-bottom: 20px;
-            font-size: 2em; /* تصغير حجم الخط قليلاً */
+            font-size: 2em;
         }
 
-        /* --- تم نقل حاوية الرسائل إلى الأعلى --- */
         #scan-status-wrapper {
             width: 100%;
-            max-width: 550px; /* ليتناسب مع عرض الفيديو تقريبًا */
-            margin-bottom: 20px; /* مسافة قبل أزرار الوضع */
-            min-height: 75px; /* ارتفاع أدنى ثابت */
-            display: flex; /* لتوسيط المحتوى عموديًا */
+            max-width: 550px;
+            margin-bottom: 20px;
+            min-height: 75px;
+            display: flex;
             align-items: center;
             justify-content: center;
             background-color: #34495e;
@@ -53,13 +52,12 @@
             padding: 15px;
             box-sizing: border-box;
             font-size: 1.1em;
-            line-height: 1.5; /* تحسين تباعد الأسطر */
+            line-height: 1.5;
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-            border: 2px solid transparent; /* لإضافة تأثير عند النجاح/الخطأ */
-            word-wrap: break-word; /* لكسر النصوص الطويلة */
+            border: 2px solid transparent;
+            word-wrap: break-word;
         }
 
-        /* فئات الألوان لحاوية الرسائل */
         #scan-status-wrapper.status-success {
             background-color: #2ecc71; color: white; border-color: #27ae60;
         }
@@ -72,7 +70,6 @@
         #scan-status-wrapper.status-info {
             background-color: #3498db; color: white; border-color: #2980b9;
         }
-        /* نص غامق داخل حاوية الرسائل */
         #scan-status-wrapper strong { font-weight: 700; }
         #scan-status-wrapper i { margin-left: 8px; }
 
@@ -85,17 +82,17 @@
             position: relative;
             width: 100%;
             max-width: 500px;
-            margin-bottom: 15px; /* تقليل المسافة السفلية */
+            margin-bottom: 15px;
             border-radius: 10px;
             overflow: hidden;
-            border: 3px solid #34495e; /* إطار خفيف للفيديو */
+            border: 3px solid #34495e;
         }
         #videoElement {
             width: 100%;
             height: auto;
             display: block;
         }
-        #detectionCanvas { /* هذا لرسم المربع حول الـ QR */
+        #detectionCanvas {
             position: absolute;
             top: 0;
             left: 0;
@@ -105,15 +102,15 @@
         }
 
         button {
-            padding: 10px 18px; /* تصغير الحشوة قليلاً */
-            margin-top: 10px; /* تقليل المسافة العلوية */
+            padding: 10px 18px;
+            margin-top: 10px;
             margin-right: 8px;
             border-radius: 6px;
             border: none;
             background-color: #3498db;
             color: white;
             cursor: pointer;
-            font-size: 0.95em; /* تصغير حجم الخط قليلاً */
+            font-size: 0.95em;
             font-weight: bold;
             transition: background-color 0.2s ease, transform 0.1s ease;
             display: inline-flex;
@@ -129,7 +126,7 @@
             cursor: not-allowed;
         }
 
-        #toggleModeButton { background-color: #1abc9c; } /* لون مختلف لزر الوضع */
+        #toggleModeButton { background-color: #1abc9c; }
         #toggleModeButton:hover { background-color: #16a085; }
 
         #showLookupButton { background-color: #e67e22; }
@@ -138,9 +135,9 @@
         #manualTicketLookup {
             margin-top: 20px;
             padding: 20px;
-            background-color: rgba(52, 73, 94, 0.85); /* خلفية شفافة قليلاً */
+            background-color: rgba(52, 73, 94, 0.85);
             border-radius: 8px;
-            display: none; /* يبدأ مخفياً */
+            display: none;
             width: 100%;
             max-width: 500px;
             box-sizing: border-box;
@@ -153,7 +150,7 @@
             color: #ecf0f1;
         }
         #manualTicketLookup input[type="text"] {
-            width: calc(100% - 24px); /* عرض كامل مع مراعاة الحشوة */
+            width: calc(100% - 24px);
             padding: 12px;
             margin-bottom: 15px;
             border-radius: 5px;
@@ -167,14 +164,14 @@
             box-shadow: 0 0 0 0.2rem rgba(52,152,219,.25);
             outline: none;
         }
-        #manualTicketLookup button { /* زر البحث اليدوي */
+        #manualTicketLookup button {
             width: 100%;
             background-color: #27ae60;
-            margin-top: 0; /* لا حاجة لمسافة علوية هنا */
+            margin-top: 0;
         }
         #manualTicketLookup button:hover { background-color: #229954; }
 
-        .button-group { margin-top: 10px; margin-bottom: 10px; } /* مسافات متساوية لمجموعات الأزرار */
+        .button-group { margin-top: 10px; margin-bottom: 10px; }
         #loadingMessage {
             display: none;
             font-style: italic;
@@ -185,9 +182,8 @@
 </head>
 <body>
     <div class="container">
-        <h1><i class="fas fa-qrcode"></i> مسح تذاكر الدخول</h1>
+        <h1><i class="fas fa-qrcode"></i> HAJIB SOFT QR-TICKET</h1>
 
-        <!-- تم نقل حاوية الرسائل إلى هنا -->
         <div id="scan-status-wrapper">
             اختر وضع التشغيل أو ابدأ المسح بالكاميرا.
         </div>
@@ -200,8 +196,8 @@
 
         <div id="video-wrapper">
             <video id="videoElement" playsinline autoplay muted></video>
-            <canvas id="detectionCanvas"></canvas> <!-- لرسم مربع حول الـ QR -->
-            <canvas id="qrAnalysisCanvas" style="display: none;"></canvas> <!-- لتحليل الصورة -->
+            <canvas id="detectionCanvas"></canvas>
+            <canvas id="qrAnalysisCanvas" style="display: none;"></canvas>
         </div>
         <div id="loadingMessage">جاري تحميل الكاميرا...</div>
 
@@ -216,7 +212,7 @@
             <input type="text" id="manualTicketId" placeholder="مثال: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
             <button id="manualLookupButton"><i class="fas fa-check-circle"></i> تحقق من التذكرة</button>
         </div>
-    </div> <!-- نهاية .container -->
+    </div>
 
     <audio id="successSound" src="success.mp3" preload="auto"></audio>
     <audio id="errorSound" src="error.mp3" preload="auto"></audio>
@@ -224,18 +220,17 @@
     <audio id="infoSound" src="success.mp3" preload="auto"></audio>
 
     <script>
-        // ---!!! مهم جداً: استبدل هذا برابط تطبيق الويب الخاص بك من Google Apps Script !!!---
-        const WEB_APP_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL';
-        // مثال: const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzyn0zHJWsulERf6p6Cmm7U7JyqVPhvC-dCfdLM-7wckPqNDn2AzTexvJXbu1UUVdem/exec';
+        // ---!!! الرابط لتطبيق Google Apps Script (تم التحديث) !!!---
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzyn0zHJWsulERf6p6Cmm7U7JyqVPhvC-dCfdLM-7wckPqNDn2AzTexvJXbu1UUVdem/exec';
 
         const video = document.getElementById('videoElement');
         const qrAnalysisCanvasElement = document.getElementById('qrAnalysisCanvas');
-        const qrAnalysisCanvas = qrAnalysisCanvasElement.getContext('2d', { willReadFrequently: true }); // willReadFrequently قد يحسن الأداء
+        const qrAnalysisCanvas = qrAnalysisCanvasElement.getContext('2d', { willReadFrequently: true });
         const detectionCanvasElement = document.getElementById('detectionCanvas');
         const detectionCanvas = detectionCanvasElement.getContext('2d');
         const videoWrapper = document.getElementById('video-wrapper');
 
-        const scanStatusWrapper = document.getElementById('scan-status-wrapper'); // تم تغيير اسم المتغير
+        const scanStatusWrapper = document.getElementById('scan-status-wrapper');
         const loadingMessage = document.getElementById('loadingMessage');
         const startScanButton = document.getElementById('startScanButton');
         const stopScanButton = document.getElementById('stopScanButton');
@@ -255,10 +250,10 @@
         let stream = null;
         let animationFrameId = null;
         let processingQrCode = false;
-        const SCAN_RESTART_DELAY = 2500; // زيادة مدة عرض الرسالة قليلاً
+        const SCAN_RESTART_DELAY = 2500;
         let lastDetectedQrLocation = null;
 
-        let currentOperationMode = 'scan'; // 'scan' (للدخول) or 'check' (للتحقق فقط)
+        let currentOperationMode = 'scan';
         const SCAN_MODE_TEXT_BTN = "الوضع الحالي: مسح للدخول";
         const CHECK_MODE_TEXT_BTN = "الوضع الحالي: تحقق من الصلاحية";
 
@@ -286,12 +281,9 @@
             });
         }
 
-
         function playSound(soundElement) {
             if (!audioUnlocked) {
                 console.warn("Audio not unlocked. Sound may not play.");
-                // يمكنك محاولة فتح الصوت مرة أخرى هنا إذا أردت
-                // unlockAudio();
             }
             if (soundElement && typeof soundElement.play === 'function') {
                 soundElement.currentTime = 0;
@@ -303,15 +295,14 @@
             detectionCanvas.beginPath();
             detectionCanvas.moveTo(begin.x, begin.y);
             detectionCanvas.lineTo(end.x, end.y);
-            detectionCanvas.lineWidth = 4; // زيادة سمك الخط
+            detectionCanvas.lineWidth = 4;
             detectionCanvas.strokeStyle = color;
-            detectionCanvas.lineCap = "round"; // جعل نهايات الخطوط دائرية
+            detectionCanvas.lineCap = "round";
             detectionCanvas.stroke();
         }
 
         function drawQrBox(location, color = "#2ecc71") {
-            if (!location || !location.topLeftCorner) return; // تحقق إضافي
-            // يتم القياس داخل tick الآن بناءً على أبعاد الفيديو الفعلية وعرض الحاوية
+            if (!location || !location.topLeftCorner) return;
             drawLine(location.topLeftCorner, location.topRightCorner, color);
             drawLine(location.topRightCorner, location.bottomRightCorner, color);
             drawLine(location.bottomRightCorner, location.bottomLeftCorner, color);
@@ -319,9 +310,8 @@
         }
 
         function tick() {
-            if (processingQrCode) { // إذا كنا نعالج QR، لا تفعل شيئًا آخر في هذه الدورة
+            if (processingQrCode) {
                 if (lastDetectedQrLocation) {
-                    // إعادة رسم المربع الأخير بلون مختلف للإشارة إلى المعالجة
                     const scaleX = detectionCanvasElement.width / qrAnalysisCanvasElement.width;
                     const scaleY = detectionCanvasElement.height / qrAnalysisCanvasElement.height;
                     const scaledLocation = {
@@ -331,7 +321,7 @@
                         bottomLeftCorner: { x: lastDetectedQrLocation.bottomLeftCorner.x * scaleX, y: lastDetectedQrLocation.bottomLeftCorner.y * scaleY },
                     };
                     detectionCanvas.clearRect(0, 0, detectionCanvasElement.width, detectionCanvasElement.height);
-                    drawQrBox(scaledLocation, "#f39c12"); // لون برتقالي أثناء المعالجة
+                    drawQrBox(scaledLocation, "#f39c12");
                 }
                 if (stream && stream.active) animationFrameId = requestAnimationFrame(tick);
                 return;
@@ -340,19 +330,17 @@
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 loadingMessage.style.display = 'none';
 
-                // التأكد من أن أبعاد لوحة التحليل تتطابق مع الفيديو
                 if (qrAnalysisCanvasElement.width !== video.videoWidth || qrAnalysisCanvasElement.height !== video.videoHeight) {
                     qrAnalysisCanvasElement.width = video.videoWidth;
                     qrAnalysisCanvasElement.height = video.videoHeight;
                 }
-                // التأكد من أن أبعاد لوحة الرسم تتطابق مع حاوية الفيديو
                 if (detectionCanvasElement.width !== videoWrapper.offsetWidth || detectionCanvasElement.height !== videoWrapper.offsetHeight) {
                     detectionCanvasElement.width = videoWrapper.offsetWidth;
                     detectionCanvasElement.height = videoWrapper.offsetHeight;
                 }
 
                 qrAnalysisCanvas.drawImage(video, 0, 0, qrAnalysisCanvasElement.width, qrAnalysisCanvasElement.height);
-                detectionCanvas.clearRect(0, 0, detectionCanvasElement.width, detectionCanvasElement.height); // مسح لوحة الرسم
+                detectionCanvas.clearRect(0, 0, detectionCanvasElement.width, detectionCanvasElement.height);
 
                 try {
                     const imageData = qrAnalysisCanvas.getImageData(0, 0, qrAnalysisCanvasElement.width, qrAnalysisCanvasElement.height);
@@ -362,14 +350,13 @@
                         return;
                     }
                     const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "dontInvert", // أو "attemptBoth" إذا كانت هناك مشاكل في المسح
+                        inversionAttempts: "dontInvert",
                     });
 
                     if (code && code.data) {
                         console.log("Found QR code:", code.data);
-                        lastDetectedQrLocation = code.location; // حفظ موقع QR الأصلي من qrAnalysisCanvas
+                        lastDetectedQrLocation = code.location;
                         
-                        // تحجيم نقاط الموقع لتناسب detectionCanvas
                         const scaleX = detectionCanvasElement.width / qrAnalysisCanvasElement.width;
                         const scaleY = detectionCanvasElement.height / qrAnalysisCanvasElement.height;
                         const scaledLocation = {
@@ -378,7 +365,7 @@
                             bottomRightCorner: { x: code.location.bottomRightCorner.x * scaleX, y: code.location.bottomRightCorner.y * scaleY },
                             bottomLeftCorner: { x: code.location.bottomLeftCorner.x * scaleX, y: code.location.bottomLeftCorner.y * scaleY },
                         };
-                        drawQrBox(scaledLocation); // رسم المربع على detectionCanvas
+                        drawQrBox(scaledLocation);
 
                         processingQrCode = true;
                         processScannedCode(code.data, 'scan');
@@ -388,7 +375,6 @@
                 } catch (err) {
                     console.error("Error during QR scan tick:", err);
                     lastDetectedQrLocation = null;
-                    // يمكن إضافة رسالة خطأ للمستخدم هنا إذا تكرر الخطأ
                 }
             }
             if (stream && stream.active) {
@@ -398,7 +384,7 @@
         
         function updateScanStatus(htmlMessage, type = 'info', playDefaultSound = false) {
             scanStatusWrapper.innerHTML = htmlMessage;
-            scanStatusWrapper.className = ''; // Reset classes
+            scanStatusWrapper.className = '';
             scanStatusWrapper.classList.add(`status-${type}`);
             if(playDefaultSound) {
                 if(type === 'success') playSound(successSound);
@@ -411,8 +397,8 @@
         function updateModeButtonVisuals() {
             if (currentOperationMode === 'scan') {
                 toggleModeButton.innerHTML = `<i class="fas fa-ticket-alt"></i> ${SCAN_MODE_TEXT_BTN}`;
-                toggleModeButton.style.backgroundColor = '#1abc9c'; // لون مختلف لوضع المسح
-            } else { // 'check' mode
+                toggleModeButton.style.backgroundColor = '#1abc9c';
+            } else {
                 toggleModeButton.innerHTML = `<i class="fas fa-search-plus"></i> ${CHECK_MODE_TEXT_BTN}`;
                 toggleModeButton.style.backgroundColor = '#e67e22';
             }
@@ -424,9 +410,8 @@
             updateModeButtonVisuals();
             updateScanStatus(`تم تغيير الوضع إلى: ${currentOperationMode === 'scan' ? 'مسح للدخول' : 'التحقق من الصلاحية'}.`, 'info');
             console.log("Operation mode changed to:", currentOperationMode);
-            // إذا كان البحث اليدوي مفتوحًا، قم بإعادة تعيين رسالة الحالة
             if (document.getElementById('manualTicketLookup').style.display === 'block') {
-                 manualTicketIdInput.value = ''; // مسح حقل الإدخال
+                 manualTicketIdInput.value = '';
             }
         });
 
@@ -436,9 +421,9 @@
                 startScanButton.disabled = true;
                 return;
             }
-            if (WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL' || !WEB_APP_URL.startsWith('https://script.google.com/')) {
-                updateScanStatus("خطأ في الإعداد: يرجى تعديل رابط WEB_APP_URL في بداية ملف HTML.", 'error');
-                startScanButton.disabled = true;
+             // تم إزالة التحقق الصريح من قيمة WEB_APP_URL هنا لأننا سنعتمد على التحقق عند التحميل
+            if (startScanButton.disabled && startScanButton.innerHTML.includes('خطأ في الإعداد')) {
+                // لا تحاول البدء إذا كان هناك خطأ في الإعداد الأساسي
                 return;
             }
             if (stream && stream.active) return;
@@ -476,7 +461,7 @@
                 loadingMessage.style.display = 'none';
                 updateScanStatus(`خطأ في الكاميرا: ${err.name} - ${err.message}`, 'error');
                 startScanButton.innerHTML = '<i class="fas fa-camera"></i> بدء المسح';
-                startScanButton.disabled = false;
+                startScanButton.disabled = false; // أعد تمكين الزر إذا فشل
             }
         }
 
@@ -493,7 +478,7 @@
             if (scanStatusWrapper.className.includes('status-success') || scanStatusWrapper.className.includes('status-error') || scanStatusWrapper.className.includes('status-warning')) {
                 // لا تغير الرسالة إذا كانت نتيجة مسح سابقة
             } else {
-                updateScanStatus("تم إيقاف المسح. انقر على 'بدء المسح' مرة أخرى.", 'info');
+                 updateScanStatus("تم إيقاف المسح. انقر على 'بدء المسح' مرة أخرى.", 'info');
             }
             startScanButton.innerHTML = '<i class="fas fa-camera"></i> بدء المسح';
             startScanButton.disabled = false;
@@ -507,22 +492,13 @@
         stopScanButton.addEventListener('click', stopCamera);
 
         async function processScannedCode(qrCodeData, inputSource = 'scan') {
-            // إذا كان البحث اليدوي مفتوحًا عند المسح بالكاميرا، أغلقه أولاً
             if (inputSource === 'scan' && document.getElementById('manualTicketLookup').style.display === 'block') {
-                toggleManualLookup(); // سيؤدي هذا إلى إيقاف الكاميرا إذا كانت تعمل، وهذا جيد
+                toggleManualLookup();
             }
 
-            let endpointAction = 'scanTicket'; // الافتراضي هو تسجيل الدخول
+            let endpointAction = 'scanTicket';
             if (currentOperationMode === 'check') {
                 endpointAction = 'checkTicketStatus';
-            } else if (inputSource === 'manual' && currentOperationMode === 'scan') {
-                // إذا كان البحث يدويًا والوضع "مسح للدخول"، ما زلنا نريد تسجيل الدخول
-                // ولكن إذا كان المستخدم يريد فقط التحقق يدويًا، سيغير الوضع أولاً إلى 'check'
-                // لذا، يمكننا تبسيط هذا:
-                // endpointAction = (currentOperationMode === 'scan') ? 'scanTicket' : 'checkTicketStatus';
-                // ولكن إذا أردنا أن يكون البحث اليدوي دائمًا "تحقق فقط" ما لم يكن الوضع "مسح للدخول"
-                // هذا يعتمد على كيفية تصميم الـ actions في Code.gs
-                // سأفترض أن البحث اليدوي الآن يستخدم نفس منطق الوضع الحالي
             }
             
             let displayText = `جاري التحقق من: <strong>${qrCodeData}</strong>...`;
@@ -531,8 +507,8 @@
             updateScanStatus(displayText, 'info');
 
             const formData = new FormData();
-            formData.append('action', endpointAction); // إرسال `action` المناسب
-            formData.append('qrCodeData', qrCodeData); // كان هذا `qrCodeId` سابقًا، تأكد من التوافق مع Code.gs
+            formData.append('action', endpointAction);
+            formData.append('qrCodeData', qrCodeData);
 
             try {
                 const response = await fetch(WEB_APP_URL, { method: 'POST', body: formData });
@@ -548,37 +524,35 @@
                 let soundToPlay = null;
 
                 if (result.success) {
-                    // `scanTicket` action in Code.gs should return `status: "valid_and_used"`
                     if (result.status === "valid_and_used") { 
                         messageHtml = `<strong><i class="fas fa-check-circle"></i> تم تسجيل الدخول بنجاح!</strong><br>الضيف: ${result.guestName || 'غير محدد'}<br>وقت الدخول: ${result.scannedAt || 'N/A'}`;
                         statusType = 'success';
                         soundToPlay = successSound;
                     } 
-                    // `checkTicketStatus` or manual lookup in 'check' mode
                     else if (result.status === "valid_not_used") { 
                         messageHtml = `<strong><i class="fas fa-check-square"></i> تذكرة صالحة (لم تستخدم بعد)</strong><br>الضيف: ${result.guestName || 'غير محدد'}`;
-                        statusType = 'success'; // لا يزال يعتبر نجاحًا في التحقق
-                        soundToPlay = infoSound; // صوت معلوماتي
+                        statusType = 'success';
+                        soundToPlay = infoSound;
                     } 
                     else if (result.status === "already_used") { 
                          messageHtml = `<strong><i class="fas fa-exclamation-triangle"></i> تذكرة مستخدمة بالفعل</strong><br>الضيف: ${result.guestName || 'غير محدد'}<br>وقت الدخول: ${result.scannedAt || 'N/A'}`;
                          statusType = 'warning';
                          soundToPlay = usedSound;
-                    } else { // حالة نجاح عامة غير متوقعة
+                    } else {
                         messageHtml = `<strong><i class="fas fa-info-circle"></i> ${result.message || 'تمت العملية'}</strong> (الحالة: ${result.status || 'غير معروفة'})`;
                         statusType = 'info';
                         soundToPlay = infoSound;
                     }
-                } else { // result.success is false
+                } else {
                     statusType = 'error';
                     soundToPlay = errorSound;
                     if (result.status === "not_found") {
                         messageHtml = `<strong><i class="fas fa-times-circle"></i> تذكرة غير موجودة أو غير صالحة.</strong>`;
                     } else if (result.status === "already_used" && endpointAction === 'scanTicket') {
-                        // هذه الحالة مهمة: محاولة تسجيل دخول تذكرة مستخدمة بالفعل
                         messageHtml = `<strong><i class="fas fa-ban"></i> فشل تسجيل الدخول: التذكرة مستخدمة بالفعل!</strong><br>الضيف: ${result.guestName || 'غير محدد'}<br>وقت الدخول: ${result.scannedAt || 'N/A'}`;
                     } else {
                         messageHtml = `<strong><i class="fas fa-times-circle"></i> ${result.message || 'فشلت العملية.'}</strong>`;
+                        if (result.guestName) messageHtml += `<br>الضيف المقترن: ${result.guestName}`;
                     }
                 }
                 updateScanStatus(messageHtml, statusType);
@@ -589,19 +563,17 @@
                 updateScanStatus(`<strong><i class="fas fa-exclamation-triangle"></i> خطأ في الاتصال:</strong> ${error.message}`, 'error', true);
             }
 
-            if (inputSource === 'scan') { // إذا كان المسح من الكاميرا
+            if (inputSource === 'scan') {
                 setTimeout(() => {
                     processingQrCode = false;
                     lastDetectedQrLocation = null;
-                    // لا تقم بمسح رسالة الحالة هنا، دعها تظهر للمستخدم
-                    if (stream && stream.active && !animationFrameId) { // أعد تشغيل tick إذا توقفت
+                    if (stream && stream.active && !animationFrameId) {
                         animationFrameId = requestAnimationFrame(tick);
                     }
                 }, SCAN_RESTART_DELAY);
-            } else { // إذا كان الإدخال يدويًا
+            } else {
                 processingQrCode = false;
                 lastDetectedQrLocation = null;
-                // لا تمسح رسالة الحالة هنا أيضًا
             }
         }
 
@@ -611,14 +583,13 @@
                 lookupDiv.style.display = 'block';
                 showLookupButton.innerHTML = '<i class="fas fa-camera-retro"></i> العودة للكاميرا';
                 if (stream && stream.active) {
-                    stopCamera(); // إيقاف الكاميرا عند فتح البحث اليدوي
+                    stopCamera();
                 }
-                manualTicketIdInput.focus(); // تركيز على حقل الإدخال
-                updateScanStatus("أدخل معرف التذكرة للبحث اليدوي.", 'info'); // مسح أي رسالة سابقة
+                manualTicketIdInput.focus();
+                updateScanStatus("أدخل معرف التذكرة للبحث اليدوي.", 'info');
             } else {
                 lookupDiv.style.display = 'none';
                 showLookupButton.innerHTML = '<i class="fas fa-search"></i> بحث يدوي';
-                // لا تقم ببدء الكاميرا تلقائيًا، دع المستخدم يضغط "بدء المسح"
                 updateScanStatus("تم إغلاق البحث اليدوي. يمكنك بدء المسح بالكاميرا.", 'info');
             }
         }
@@ -631,20 +602,23 @@
                 updateScanStatus("الرجاء إدخال معرّف التذكرة.", 'warning', true);
                 return;
             }
-            processingQrCode = true; // لمنع tick من العمل أثناء البحث اليدوي
+            processingQrCode = true;
             processScannedCode(ticketId, 'manual');
         });
 
-        // التهيئة الأولية
+        // Initialize
         updateModeButtonVisuals();
-        updateScanStatus("اختر وضع التشغيل أو ابدأ المسح بالكاميرا.", 'info');
-
+        
         // التحقق من رابط السكربت عند التحميل
-        if (WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL' || !WEB_APP_URL.startsWith('https://script.google.com/')) {
+        if (!WEB_APP_URL || WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL' || !WEB_APP_URL.startsWith('https://script.google.com/macros/s/')) {
             updateScanStatus("<strong>خطأ في الإعداد:</strong> يرجى تعديل رابط <code>WEB_APP_URL</code> في بداية ملف HTML ليشير إلى رابط تطبيق الويب المنشور من Google Apps Script.", 'error');
             startScanButton.disabled = true;
+            startScanButton.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ في الإعداد';
             toggleModeButton.disabled = true;
             showLookupButton.disabled = true;
+            manualLookupButton.disabled = true;
+        } else {
+            updateScanStatus("اختر وضع التشغيل أو ابدأ المسح بالكاميرا.", 'info');
         }
     </script>
 </body>
