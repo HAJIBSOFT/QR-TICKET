@@ -54,7 +54,7 @@
             content: '';
             position: absolute;
             top: -50px;
-            left: -50px;
+            left: -50px; /* Changed to left for RTL if needed, but this is a background effect */
             width: 150px;
             height: 150px;
             background-color: rgba(52, 152, 219, 0.05);
@@ -211,9 +211,8 @@
     </div>
 
     <script>
-        // --- ضع هنا رابط النشر لتطبيق Google Apps Script الخاص بك ---
-        // مثال: const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/ABCDEFG123456/exec';
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzyn0zHJWsulERf6p6Cmm7U7JyqVPhvC-dCfdLM-7wckPqNDn2AzTexvJXbu1UUVdem/exec'; // <<<<< عدّل هذا الرابط
+        // --- الرابط لتطبيق Google Apps Script ---
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzyn0zHJWsulERf6p6Cmm7U7JyqVPhvC-dCfdLM-7wckPqNDn2AzTexvJXbu1UUVdem/exec';
 
         document.addEventListener('DOMContentLoaded', function() {
             const loadingIndicator = document.getElementById('loadingIndicator');
@@ -226,28 +225,31 @@
             const qrcodeDisplayElem = document.getElementById('qrcodeDisplay');
             const statusContainer = document.getElementById('statusMessageContainer');
             
-            // استخلاص المعلمات من رابط الصفحة الحالي
             const urlParams = new URLSearchParams(window.location.search);
             const qrDataParam = urlParams.get('qrData');
-            const eventNameParam = urlParams.get('eventName') || "دعوة خاصة"; // قيمة افتراضية إذا لم يتم تمريرها
+            const eventNameParam = urlParams.get('eventName') || "دعوة خاصة";
 
             if (!qrDataParam) {
                 showError("خطأ: معرف التذكرة (qrData) مفقود من الرابط.");
                 return;
             }
             
-            if (GOOGLE_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbzyn0zHJWsulERf6p6Cmm7U7JyqVPhvC-dCfdLM-7wckPqNDn2AzTexvJXbu1UUVdem/exec') {
-                showError("خطأ في الإعداد: يرجى تعديل رابط GOOGLE_SCRIPT_URL في كود PublicTicketView.html.");
+            // تم إزالة التحقق الصريح من GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL'
+            // لأنه تم تضمين الرابط مباشرة. ولكن التحقق من أنه يبدأ بـ https://script.google.com/ لا يزال مفيدًا.
+            if (!GOOGLE_SCRIPT_URL || !GOOGLE_SCRIPT_URL.startsWith('https://script.google.com/macros/s/')) {
+                showError("خطأ في الإعداد: رابط GOOGLE_SCRIPT_URL غير صحيح أو غير مُعرَّف في كود PublicTicketView.html.");
                 return;
             }
 
-            // بناء رابط طلب البيانات من Google Apps Script
             const fetchUrl = `${GOOGLE_SCRIPT_URL}?action=getTicketData&qrData=${encodeURIComponent(qrDataParam)}&eventName=${encodeURIComponent(eventNameParam)}`;
 
             fetch(fetchUrl)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`فشل الاتصال بالخادم: ${response.status} ${response.statusText}`);
+                        // محاولة قراءة نص الخطأ من الخادم إذا أمكن
+                        return response.text().then(text => {
+                            throw new Error(`فشل الاتصال بالخادم: ${response.status} ${response.statusText}. رد الخادم: ${text}`);
+                        });
                     }
                     return response.json();
                 })
@@ -259,8 +261,7 @@
                         guestNameElem.textContent = data.guestName;
                         qrDataElem.textContent = data.qrData;
 
-                        // إنشاء QR Code
-                        qrcodeDisplayElem.innerHTML = ''; // Clear placeholder/previous QR
+                        qrcodeDisplayElem.innerHTML = ''; 
                         qrcodeDisplayElem.classList.remove('loading-placeholder');
                         try {
                             new QRCode(qrcodeDisplayElem, {
@@ -276,17 +277,15 @@
                             console.error("QR Code generation error:", e);
                         }
                         
-                        // عرض حالة الصلاحية
                         updateStatusDisplay(data.ticketStatus, data.guestName);
                         ticketCardElement.style.display = 'block';
-                        setTimeout(() => ticketCardElement.classList.add('loaded'), 50); // For fade-in effect
+                        setTimeout(() => ticketCardElement.classList.add('loaded'), 50); 
 
                     } else {
-                        // إذا لم تكن التذكرة ناجحة ولكن تم العثور عليها (مثل "غير موجودة")
-                        if(data.message && data.qrData) {
-                            document.title = `تذكرة غير موجودة`;
-                            eventTitleElem.textContent = data.eventName || "دعوة"; // Display event name if available
-                            guestNameElem.textContent = data.guestName || "---";
+                        if(data.message && data.qrData) { // التعامل مع حالة "لم يتم العثور على التذكرة" من الخادم
+                            document.title = `تذكرة: ${data.qrData}`;
+                            eventTitleElem.textContent = data.eventName || "دعوة";
+                            guestNameElem.textContent = data.guestName || "---"; // أو "تذكرة غير معروفة"
                             qrDataElem.textContent = data.qrData;
                             qrcodeDisplayElem.innerHTML = "<p style='color:orange;'>لا يمكن عرض QR لهذه التذكرة.</p>";
                             qrcodeDisplayElem.classList.remove('loading-placeholder');
@@ -300,7 +299,7 @@
                 })
                 .catch(error => {
                     console.error('Error fetching ticket data:', error);
-                    showError(`حدث خطأ أثناء جلب بيانات التذكرة: ${error.message}. تأكد من اتصالك بالإنترنت وأن رابط السكربت صحيح.`);
+                    showError(`حدث خطأ أثناء جلب بيانات التذكرة: ${error.message}. تأكد من اتصالك بالإنترنت وأن رابط السكربت صحيح وصلاحيات الوصول للسكربت مضبوطة على "أي شخص".`);
                 });
 
             function updateStatusDisplay(ticketStatus, guestNameForStatus) {
@@ -343,7 +342,6 @@
                 statusContainer.textContent = statusText;
                 statusContainer.className = 'status-banner ' + statusClass; 
                 
-                // Remove previous status classes from ticketCard before adding new one
                 ticketCardElement.classList.remove('status-valid', 'status-used', 'status-invalid', 'status-not-found');
                 ticketCardElement.classList.add(cardBorderClass);
             }
