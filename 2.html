@@ -479,15 +479,23 @@
             `;
         }
 
-        function closeModal() {
-            resultModal.classList.remove('active');
-            // عند إغلاق النافذة، نسمح بالمسح مرة أخرى
-            processingQrCode = false;
-            lastDetectedQrLocation = null;
-            if (stream && stream.active && !animationFrameId) {
-                animationFrameId = requestAnimationFrame(tick);
-            }
-        }
+    function closeModal() {
+    // 1. إخفاء النافذة
+    resultModal.classList.remove('active');
+
+    // 2. السماح بالمسح مرة أخرى
+    processingQrCode = false;
+    lastDetectedQrLocation = null;
+
+    // 3. إعادة تشغيل حلقة الكاميرا فوراً (هذا هو الجزء الذي كان يسبب المشكلة)
+    if (stream && stream.active) {
+        // إلغاء أي عملية سابقة عالقة لضمان عدم التكرار
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        
+        // تشغيل المسح من جديد
+        animationFrameId = requestAnimationFrame(tick);
+    }
+}
 
         // --- الرسم على الكانفاس (كما هو) ---
         function drawLine(begin, end, color) {
